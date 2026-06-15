@@ -657,7 +657,7 @@ async function setThumb(el, id){
 }
 function pickAndStorePhoto(id, cb){
   const inp = document.createElement('input');
-  inp.type = 'file'; inp.accept = 'image/*'; inp.capture = 'environment';
+  inp.type = 'file'; inp.accept = 'image/*';
   inp.onchange = () => {
     const file = inp.files[0]; if (!file) return;
     const reader = new FileReader();
@@ -684,7 +684,7 @@ function pickAndStorePhoto(id, cb){
 // Capture a photo and hand back a resized JPEG data URL (not stored).
 function getPhotoDataURL(cb){
   const inp = document.createElement('input');
-  inp.type = 'file'; inp.accept = 'image/*'; inp.capture = 'environment';
+  inp.type = 'file'; inp.accept = 'image/*';
   inp.onchange = () => {
     const file = inp.files[0]; if (!file){ cb(null); return; }
     const reader = new FileReader();
@@ -703,6 +703,26 @@ function getPhotoDataURL(cb){
     reader.readAsDataURL(file);
   };
   inp.click();
+}
+
+// Photo-first add: opens the camera or library picker, then creates the cigar.
+function addCigarWithPhoto(){
+  getPhotoDataURL(async (dataURL) => {
+    if (!dataURL) return;
+    const name = (window.prompt('Name this cigar (you can edit the rest after):', '') || '').trim();
+    const loc = (cigarFilter === 'lounge') ? 'lounge' : 'home';
+    const it = C({
+      id: 'c-' + Date.now(), name: name || 'New cigar', brand: '', origin: '',
+      wrapper: 'Unspecified', wrapperType: 'habano', body: 3, bodyLabel: 'Unlogged',
+      category: loc === 'lounge' ? 'Lounge' : 'Everyday', location: loc, qty: 1,
+      flavor: '', pairing: '', needsLog: true
+    });
+    state.cigars.push(it);
+    await Photos.set(it.id, dataURL);
+    it.hasPhoto = true; save();
+    toast('Saved. Tap Edit details to fill it in.');
+    openDetail(it.id);
+  });
 }
 
 /* ------- Claude API key and photo analysis ------- */
@@ -1118,13 +1138,15 @@ let cigarSearch = '';
 function renderCigars(){
   view.innerHTML = `
     <div class="search"><input id="csearch" placeholder="Search cigars by name or brand" value="${esc(cigarSearch)}"></div>
-    <button class="btn gold sm" id="cadd" style="width:100%; margin:2px 0 2px;">📷 Add a cigar to my stash with a photo</button>
+    <button class="btn gold sm" id="cadd" style="width:100%; margin:2px 0 2px;">📷 Add a cigar with a photo</button>
+    <button class="btn ghost sm" id="caddform" style="width:100%; margin:0 0 2px;">✎ Add a cigar by typing details</button>
     <div class="filters" id="cfilters">
       ${cfilter('all','All')}${cfilter('home','Home')}${cfilter('lounge','Lounge')}${cfilter('Premium','Premium')}${cfilter('Cuban','Cuban')}${cfilter('Nicaraguan','Nica/Hon')}${cfilter('Everyday','Everyday')}${cfilter('new','Not smoked')}${cfilter('flag','To log')}
     </div>
     <div class="card" id="clist"></div>
   `;
-  document.getElementById('cadd').addEventListener('click', () => go('add'));
+  document.getElementById('cadd').addEventListener('click', addCigarWithPhoto);
+  document.getElementById('caddform').addEventListener('click', () => go('add'));
   document.getElementById('csearch').addEventListener('input', (e) => { cigarSearch = e.target.value; drawCigarList(); });
   document.getElementById('cfilters').addEventListener('click', (e) => {
     const b = e.target.closest('button'); if (!b) return;
@@ -1399,8 +1421,8 @@ function openEdit(id){
   const it = findItem(id); if (!it) return;
   const isCigar = it.kind === 'cigar';
   const fields = isCigar
-    ? [['brand','Brand'],['manufacturer','Maker'],['factory','Factory'],['country','Origin country'],['founded','Founded'],['wrapper','Wrapper'],['price','Approx cost'],['flavor','Flavor notes','area'],['pairing','Pairing notes','area'],['history','History','area'],['expert','What the experts say','area']]
-    : [['producer','Producer'],['distillery','Distillery'],['region','Region'],['country','Country'],['abv','ABV'],['age','Age'],['price','Approx cost'],['flavor','Flavor notes','area'],['pairing','Pairing notes','area'],['history','History','area'],['expert','What the experts say','area']];
+    ? [['name','Name'],['brand','Brand'],['manufacturer','Maker'],['factory','Factory'],['country','Origin country'],['founded','Founded'],['wrapper','Wrapper'],['price','Approx cost'],['flavor','Flavor notes','area'],['pairing','Pairing notes','area'],['history','History','area'],['expert','What the experts say','area']]
+    : [['name','Name'],['producer','Producer'],['distillery','Distillery'],['region','Region'],['country','Country'],['abv','ABV'],['age','Age'],['price','Approx cost'],['flavor','Flavor notes','area'],['pairing','Pairing notes','area'],['history','History','area'],['expert','What the experts say','area']];
   const sheet = document.createElement('div');
   sheet.className = 'sheet';
   sheet.innerHTML = `
@@ -1421,7 +1443,11 @@ function openEdit(id){
   sheet.addEventListener('click', (e) => { if (e.target === sheet) close(); });
   sheet.querySelector('#ecancel').addEventListener('click', () => { close(); openDetail(id); });
   sheet.querySelector('#esave').addEventListener('click', () => {
-    sheet.querySelectorAll('[data-k]').forEach(el => { it[el.dataset.k] = el.value.trim(); });
+    sheet.querySelectorAll('[data-k]').forEach(el => {
+      const v = el.value.trim();
+      if (el.dataset.k === 'name' && !v) return; // never blank the name
+      it[el.dataset.k] = v;
+    });
     if (isCigar && it.needsLog && it.flavor) it.needsLog = false;
     save(); close(); toast('Details saved'); openDetail(id);
   });
