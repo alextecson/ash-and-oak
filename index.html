@@ -681,6 +681,104 @@ function pickAndStorePhoto(id, cb){
   inp.click();
 }
 
+// Capture a photo and hand back a resized JPEG data URL (not stored).
+function getPhotoDataURL(cb){
+  const inp = document.createElement('input');
+  inp.type = 'file'; inp.accept = 'image/*'; inp.capture = 'environment';
+  inp.onchange = () => {
+    const file = inp.files[0]; if (!file){ cb(null); return; }
+    const reader = new FileReader();
+    reader.onload = () => {
+      const img = new Image();
+      img.onload = () => {
+        const max = 900;
+        let { width:w, height:h } = img;
+        if (w > max || h > max){ const r = Math.min(max/w, max/h); w = Math.round(w*r); h = Math.round(h*r); }
+        const cv = document.createElement('canvas'); cv.width = w; cv.height = h;
+        cv.getContext('2d').drawImage(img, 0, 0, w, h);
+        cb(cv.toDataURL('image/jpeg', 0.8));
+      };
+      img.src = reader.result;
+    };
+    reader.readAsDataURL(file);
+  };
+  inp.click();
+}
+
+/* ------- Claude API key and photo analysis ------- */
+const AIKEY = 'ashoak_aikey';
+function getAiKey(){ try{ return localStorage.getItem(AIKEY) || ''; }catch(e){ return ''; } }
+function setAiKey(v){ try{ localStorage.setItem(AIKEY, v); }catch(e){} }
+
+function analyzePhoto(){
+  const key = getAiKey();
+  if (!key){
+    toast('Add your Claude API key on the You tab first');
+    go('stats');
+    return;
+  }
+  getPhotoDataURL((dataURL) => {
+    if (!dataURL) return;
+    toast('Analyzing photo...');
+    const m = dataURL.match(/^data:(image\/\w+);base64,(.*)$/);
+    if (!m){ toast('Could not read the photo'); return; }
+    const mediaType = m[1], b64 = m[2];
+    const prompt = 'You are a cigar pairing assistant. Look at this photo of food or a drink. '
+      + 'Respond with ONLY compact JSON, no prose, in this exact shape: '
+      + '{"kind":"food|drink","name":"short name",'
+      + '"food":"one of: none,snack,salad,fish,sushi,chicken,pasta,pizza,chinese,burger,mexican,spicy,bbq,steak,dessert",'
+      + '"drinkCat":"one of: coffee,tequila,bourbon,whisky,rum,beer,wine,none",'
+      + '"drinkStyle":"for beer use dark|amber|hoppy|light|wheat, for wine use bold-red|light-red|white|sparkling|port, otherwise empty"}. '
+      + 'If it is food, set kind to food and pick the closest food value. If it is a drink, set kind to drink and pick drinkCat and drinkStyle.';
+    fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        'x-api-key': key,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 200,
+        messages: [{
+          role: 'user',
+          content: [
+            { type: 'image', source: { type: 'base64', media_type: mediaType, data: b64 } },
+            { type: 'text', text: prompt }
+          ]
+        }]
+      })
+    })
+    .then(r => r.json())
+    .then(data => {
+      if (data.error){ toast('Analysis error: ' + (data.error.message||'check your key')); return; }
+      const txt = (data.content && data.content[0] && data.content[0].text) || '';
+      const jm = txt.match(/\{[\s\S]*\}/);
+      if (!jm){ toast('Could not read the result'); return; }
+      let parsed; try{ parsed = JSON.parse(jm[0]); }catch(e){ toast('Could not read the result'); return; }
+      applyAnalysis(parsed);
+    })
+    .catch(() => toast('Network error. Photo analysis needs internet.'));
+  });
+}
+
+function applyAnalysis(p){
+  if (p.kind === 'food'){
+    ADV.customMeal = '';
+    const ids = MEALS.map(m => m.id);
+    ADV.mealId = ids.includes(p.food) ? p.food : 'snack';
+  } else if (p.kind === 'drink'){
+    ADV.customDrink = '';
+    ADV.bevCat = p.drinkCat || 'none';
+    ADV.bevStyle = p.drinkStyle || '';
+    ADV.bevId = '';
+  }
+  renderNow();
+  toast('Detected: ' + (p.name || p.kind));
+  runAdvisor();
+}
+
 /* ------- Router ------- */
 let currentTab = 'now';
 const view = document.getElementById('view');
@@ -704,7 +802,7 @@ function go(tab){
 }
 
 /* ============================ NOW (advisor) ============================ */
-const ADV = { where:'home', mealId:'snack', bevCat:'coffee', bevStyle:'', bevId:'', length:'standard', bev:'coffee', foodD:null };
+const ADV = { where:'home', mealId:'snack', customMeal:'', bevCat:'coffee', bevStyle:'', bevId:'', customDrink:'', length:'standard', bev:'coffee', foodD:null };
 const MEALS = [
   { id:'none', label:'Nothing, fasting', weight:0, empty:true },
   { id:'snack', label:'Light snack', weight:1 },
@@ -747,11 +845,14 @@ function renderNow(){
       <select id="mealsel">
         ${MEALS.map(m => `<option value="${m.id}" ${ADV.mealId===m.id?'selected':''}>${esc(m.label)}</option>`).join('')}
       </select>
+      <input id="mealtext" placeholder="Not listed? Type the food, e.g. ramen, lamb chops" value="${esc(ADV.customMeal)}" style="margin-top:8px;">
       <label class="fld">What are you drinking?</label>
       <div class="seg" data-grp="bevCat">
         ${seg('bevCat','coffee','Coffee')}${seg('bevCat','tequila','Tequila')}${seg('bevCat','bourbon','Bourbon')}${seg('bevCat','whisky','Whisky')}${seg('bevCat','rum','Rum')}${seg('bevCat','beer','Beer')}${seg('bevCat','wine','Wine')}${seg('bevCat','none','Nothing')}
       </div>
       <div id="bottlewrap"></div>
+      <input id="drinktext" placeholder="Not listed? Type the drink, e.g. margarita, Coke, sake" value="${esc(ADV.customDrink)}" style="margin-top:8px;">
+      <button class="btn sm ghost" id="analyzephoto" style="margin-top:10px;">📷 Take a photo and let the app figure it out</button>
       <label class="fld">Session</label>
       <div class="seg" data-grp="length">
         ${seg('length','working','Working / laptop')}${seg('length','standard','Standard')}${seg('length','special','Long / special')}
@@ -759,7 +860,7 @@ function renderNow(){
       <div style="margin-top:16px;"><button class="btn gold" id="advise">Recommend a cigar</button></div>
       <div id="result"></div>
     </div>
-    <p class="hint">Picks come only from your confirmed inventory at the chosen location. The app never invents cigars you do not own. Cigars without logged tasting notes are flagged, not guessed.</p>
+    <p class="hint">Picks come only from your confirmed inventory at the chosen location. The app never invents cigars you do not own. Type any food or drink that is not on the lists. Photo analysis uses your own Claude API key, which you set on the You tab.</p>
   `;
   view.querySelectorAll('.seg').forEach(grp => {
     grp.addEventListener('click', (e) => {
@@ -771,6 +872,9 @@ function renderNow(){
     });
   });
   document.getElementById('mealsel').addEventListener('change', (e) => { ADV.mealId = e.target.value; });
+  document.getElementById('mealtext').addEventListener('input', (e) => { ADV.customMeal = e.target.value; });
+  document.getElementById('drinktext').addEventListener('input', (e) => { ADV.customDrink = e.target.value; });
+  document.getElementById('analyzephoto').addEventListener('click', analyzePhoto);
   drawBottlePicker();
   document.getElementById('advise').addEventListener('click', runAdvisor);
 }
@@ -842,8 +946,53 @@ function deriveBev(){
   return 'none';
 }
 function deriveFood(){
+  const t = (ADV.customMeal||'').trim();
+  if (t) return classifyFoodText(t);
   const m = MEALS.find(x => x.id === ADV.mealId) || MEALS[1];
   return { w:m.weight, empty:!!m.empty, dessert:!!m.dessert, seafood:!!m.seafood, spicy:!!m.spicy, label:m.label };
+}
+// Map a freely typed food to the same weight and palate tags the advisor uses.
+function classifyFoodText(text){
+  const t = text.toLowerCase();
+  const has = (...words) => words.some(x => t.includes(x));
+  const base = { w:2, empty:false, dessert:false, seafood:false, spicy:false, label:text };
+  if (has('nothing','fasting','empty stomach','didnt eat','did not eat','skipped')) return Object.assign(base,{ w:0, empty:true });
+  if (has('dessert','cake','ice cream','chocolate','cookie','pie','pastry','donut','brownie','cheesecake','candy','sweet')) return Object.assign(base,{ w:1, dessert:true });
+  if (has('sushi','sashimi','fish','salmon','tuna','shrimp','prawn','crab','lobster','oyster','ceviche','poke','scallop','seafood','clam','mussel')) return Object.assign(base,{ w:1, seafood:true });
+  if (has('spicy','hot wings','buffalo','curry','szechuan','sichuan','jalapeno','habanero','thai','kimchi','nashville hot','vindaloo')) return Object.assign(base,{ w:2, spicy:true });
+  if (has('steak','ribeye','ribs','brisket','bbq','barbecue','prime rib','beef','lamb','pork belly','duck','short rib','wagyu','porterhouse','filet')) return Object.assign(base,{ w:3 });
+  if (has('salad','veggie','vegetable','fruit','soup','snack','crackers','nuts','cheese plate','yogurt')) return Object.assign(base,{ w:1 });
+  if (has('pizza','pasta','burger','sandwich','taco','burrito','chinese','ramen','noodle','rice','fried chicken','chicken','wings','pho','sushi roll','poutine','mac and cheese','quesadilla','enchilada','gyro','kebab','shawarma','fries')) return Object.assign(base,{ w:2 });
+  return base; // default to a medium meal
+}
+// Map a freely typed drink to a beverage category and style the advisor understands.
+function classifyDrinkText(text){
+  const t = text.toLowerCase();
+  const has = (...words) => words.some(x => t.includes(x));
+  if (has('water','nothing','soda','coke','pepsi','sprite','juice','lemonade','iced tea','tea')) return { cat:'none', style:'' };
+  if (has('coffee','espresso','latte','cappuccino','americano','cold brew','macchiato')) return { cat:'coffee', style:'' };
+  if (has('champagne','prosecco','sparkling','cava','brut','cremant','sake')) return { cat:'wine', style:'sparkling' };
+  if (has('cabernet','malbec','syrah','shiraz','zinfandel','bordeaux','bold red','petite sirah','nebbiolo','barolo','cab ')) return { cat:'wine', style:'bold-red' };
+  if (has('pinot noir','light red','grenache','beaujolais','red blend','merlot')) return { cat:'wine', style:'light-red' };
+  if (has('chardonnay','sauvignon','white wine','riesling','pinot grigio','pinot gris','albarino','rosé','viognier','chenin') || /\brose\b/.test(t)) return { cat:'wine', style:'white' };
+  if (has('port','sherry','dessert wine','moscato','sauternes','madeira','ice wine')) return { cat:'wine', style:'port' };
+  if (has('stout','porter','guinness','imperial')) return { cat:'beer', style:'dark' };
+  if (has('ipa','pale ale','hazy','double ipa','hops')) return { cat:'beer', style:'hoppy' };
+  if (has('wheat','hefeweizen','witbier','belgian','blue moon','saison')) return { cat:'beer', style:'wheat' };
+  if (has('lager','pilsner','light beer','amber','ale','beer','cerveza','modelo','corona','stella','heineken','budweiser','michelob')) return { cat:'beer', style:'light' };
+  if (has('bourbon','rye','manhattan','old fashioned','buffalo trace','makers','maker\'s','woodford','blanton','weller','eagle rare','four roses','wild turkey','knob creek','pappy','larceny')) return { cat:'bourbon', style:'' };
+  if (has('scotch','single malt','islay','speyside','japanese whisky','whisky','whiskey','macallan','glenlivet','glenfiddich','lagavulin','laphroaig','yamazaki','hibiki','nikka','johnnie walker','balvenie','oban','glenmorangie')) return { cat:'whisky', style:'' };
+  if (has('tequila','mezcal','margarita','paloma','blanco','reposado','anejo','añejo','patron','patrón','don julio','casamigos','clase azul','fortaleza','espolon','espolòn')) return { cat:'tequila', style:'' };
+  if (has('rhum agricole','agricole')) return { cat:'rum', style:'' };
+  if (has('rum','daiquiri','mojito','mai tai','pina colada','rum punch','zacapa','diplomatico','appleton','bacardi')) return { cat:'rum', style:'' };
+  if (has('gin','vodka','martini','cognac','brandy','wine')) return { cat:'wine', style:'light-red' };
+  return { cat:'none', style:'' };
+}
+function applyCustomDrink(){
+  const t = (ADV.customDrink||'').trim();
+  if (!t) return;
+  const { cat, style } = classifyDrinkText(t);
+  ADV.bevCat = cat; ADV.bevStyle = style; ADV.bevId = '';
 }
 
 function scoreCigar(it){
@@ -881,6 +1030,7 @@ function scoreCigar(it){
 }
 
 function runAdvisor(){
+  applyCustomDrink();
   ADV.bev = deriveBev();
   ADV.foodD = deriveFood();
   const pool = state.cigars.filter(c => c.location === ADV.where);
@@ -1478,6 +1628,16 @@ function renderStats(){
     <div class="card">
       ${rated.length ? rated.map(c=>`<div class="logentry" data-open="${c.id}" style="cursor:pointer;"><span class="d">${esc(c.name)}</span><span class="stars">${stars(avgRating(c))}</span></div>`).join('') : `<div class="empty">Rate a few smokes to build your top list.</div>`}
     </div>
+    <h2 class="sec">Photo analysis</h2>
+    <div class="card">
+      <label class="fld">Your Claude API key</label>
+      <input id="aikey" type="password" placeholder="sk-ant-..." value="${esc(getAiKey())}">
+      <div class="row2" style="margin-top:10px;">
+        <button class="btn sm gold" id="savekey">Save key</button>
+        <button class="btn sm ghost" id="clearkey">Remove key</button>
+      </div>
+      <p class="hint">Needed only for the "Take a photo and let the app figure it out" button on the Now tab. The key is stored on this device only and is sent straight to Anthropic when you analyze a photo. Get a key at console.anthropic.com. Photo analysis needs internet and uses your Anthropic credits.</p>
+    </div>
     <h2 class="sec">Backup</h2>
     <div class="card">
       <div class="row2">
@@ -1489,6 +1649,8 @@ function renderStats(){
     </div>
   `;
   view.querySelectorAll('[data-open]').forEach(el => el.addEventListener('click', () => openDetail(el.dataset.open)));
+  document.getElementById('savekey').addEventListener('click', () => { setAiKey(document.getElementById('aikey').value.trim()); toast('Key saved'); });
+  document.getElementById('clearkey').addEventListener('click', () => { setAiKey(''); document.getElementById('aikey').value=''; toast('Key removed'); });
   document.getElementById('exp').addEventListener('click', exportData);
   document.getElementById('imp').addEventListener('click', importData);
   document.getElementById('reset').addEventListener('click', () => {
