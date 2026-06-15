@@ -1,0 +1,19 @@
+{
+  "name": "Ash & Oak",
+  "short_name": "Ash & Oak",
+  "description": "Personal cigar and spirits humidor, inventory, and pairing advisor.",
+  "start_url": ".",
+  "scope": ".",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#1a120b",
+  "theme_color": "#1a120b",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

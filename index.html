@@ -1,0 +1,1530 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Ash & Oak">
+<meta name="theme-color" content="#1a120b">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon.svg">
+<title>Ash & Oak</title>
+<style>
+  :root{
+    --bg:#1a120b; --bg2:#241910; --card:#2c2014; --card2:#352714;
+    --ink:#f3e9d8; --muted:#b39b78; --faint:#7d6a4f;
+    --gold:#c69a5b; --gold2:#e0b878; --ember:#ff7043;
+    --line:#3f2f1c; --green:#5fa463; --greenbg:#1f3320; --red:#d96b5a;
+    --chip:#3a2a17;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{margin:0; padding:0;}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    background:radial-gradient(120% 80% at 50% 0%,#241910 0%,#1a120b 60%,#140d07 100%);
+    color:var(--ink); min-height:100vh; -webkit-font-smoothing:antialiased;
+    padding-bottom:84px;
+  }
+  .wrap{max-width:720px; margin:0 auto; padding:14px 14px 20px;}
+  header{display:flex; align-items:center; gap:10px; padding:10px 4px 6px;}
+  header .logo{font-size:24px;}
+  header h1{margin:0; font-size:20px; letter-spacing:.4px; color:var(--gold2); font-weight:700;}
+  header p{margin:1px 0 0; font-size:12px; color:var(--muted);}
+
+  .card{background:linear-gradient(180deg,var(--card) 0%,var(--card2) 100%);
+    border:1px solid var(--line); border-radius:16px; padding:16px;
+    box-shadow:0 8px 26px rgba(0,0,0,.35); margin-top:14px;}
+  h2.sec{font-size:13px; text-transform:uppercase; letter-spacing:1px; color:var(--gold);
+    margin:18px 4px 2px;}
+
+  /* Tabs / bottom nav */
+  .nav{position:fixed; left:0; right:0; bottom:0; z-index:40;
+    background:rgba(20,13,7,.94); backdrop-filter:blur(10px);
+    border-top:1px solid var(--line); display:flex; padding:6px 4px calc(6px + env(safe-area-inset-bottom));}
+  .nav button{flex:1; background:none; border:none; color:var(--faint); font-size:10.5px;
+    font-weight:600; padding:6px 2px; cursor:pointer; display:flex; flex-direction:column;
+    align-items:center; gap:2px; letter-spacing:.3px;}
+  .nav button .ic{font-size:20px; line-height:1;}
+  .nav button.active{color:var(--gold2);}
+
+  /* Buttons */
+  .btn{display:inline-flex; align-items:center; justify-content:center; gap:7px;
+    border:1px solid var(--line); background:var(--chip); color:var(--ink);
+    border-radius:11px; padding:11px 14px; font-size:14px; font-weight:600; cursor:pointer;
+    width:100%; transition:.12s;}
+  .btn:active{transform:scale(.99);}
+  .btn.gold{background:linear-gradient(180deg,var(--gold) 0%,#a87c3f 100%); color:#2a1c0c;
+    border-color:#8a6531; font-weight:700;}
+  .btn.ghost{background:transparent;}
+  .btn.sm{width:auto; padding:8px 12px; font-size:13px;}
+  .btn.danger{background:transparent; border-color:#5a3030; color:var(--red);}
+
+  /* Form fields */
+  label.fld{display:block; font-size:12px; color:var(--muted); margin:12px 2px 5px; font-weight:600;}
+  input,select,textarea{width:100%; background:#1d140c; border:1px solid var(--line);
+    color:var(--ink); border-radius:10px; padding:11px 12px; font-size:15px; font-family:inherit;}
+  textarea{min-height:70px; resize:vertical;}
+  .seg{display:flex; flex-wrap:wrap; gap:7px;}
+  .seg button{flex:1 1 auto; min-width:30%; border:1px solid var(--line); background:#1d140c;
+    color:var(--muted); border-radius:10px; padding:9px 8px; font-size:13px; font-weight:600; cursor:pointer;}
+  .seg button.on{background:var(--gold); color:#2a1c0c; border-color:#8a6531;}
+
+  /* Pick cards */
+  .pick{border-radius:14px; padding:14px; margin-top:12px; border:1px solid var(--line);}
+  .pick.safe{background:linear-gradient(180deg,#1f2c1d 0%,#1a241a 100%); border-color:#33502f;}
+  .pick.intr{background:linear-gradient(180deg,#2e2113 0%,#27190d 100%); border-color:#5a431f;}
+  .pick .kicker{font-size:11px; font-weight:700; letter-spacing:1px; text-transform:uppercase;}
+  .pick.safe .kicker{color:var(--green);}
+  .pick.intr .kicker{color:var(--gold2);}
+  .pick .nm{font-size:18px; font-weight:700; margin:3px 0 2px;}
+  .pick .why{font-size:13px; color:var(--muted); line-height:1.45; margin-top:6px;}
+  .pick .loc{font-size:11.5px; color:var(--faint); margin-top:6px;}
+
+  .timing{margin-top:12px; font-size:12.5px; color:var(--muted); line-height:1.5;}
+  .timing b{color:var(--gold2);}
+
+  /* List items */
+  .item{display:flex; gap:12px; align-items:center; padding:11px 0; border-bottom:1px solid var(--line); cursor:pointer;}
+  .item:last-child{border-bottom:none;}
+  .thumb{width:54px; height:54px; border-radius:10px; flex:none; object-fit:cover;
+    background:#1d140c center/cover no-repeat; border:1px solid var(--line);
+    display:flex; align-items:center; justify-content:center; font-size:22px; color:var(--faint);}
+  .item .info{flex:1; min-width:0;}
+  .item .nm{font-size:15px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .item .sub{font-size:12px; color:var(--muted); margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .badges{display:flex; gap:5px; margin-top:5px; flex-wrap:wrap;}
+  .badge{font-size:10px; font-weight:700; letter-spacing:.3px; border-radius:6px; padding:2px 6px;
+    background:var(--chip); color:var(--muted); border:1px solid var(--line);}
+  .badge.smoked{background:var(--greenbg); color:var(--green); border-color:#33502f;}
+  .badge.new{background:#2a2436; color:#b0a4e0; border-color:#473d63;}
+  .badge.flag{background:#3a2417; color:var(--ember); border-color:#5a3320;}
+  .badge.body{background:#3a1f1f; color:#e0a0a0; border-color:#5a3030;}
+
+  .search{margin:10px 0 2px;}
+  .filters{display:flex; gap:7px; overflow-x:auto; padding:8px 0 2px; -webkit-overflow-scrolling:touch;}
+  .filters button{white-space:nowrap; border:1px solid var(--line); background:#1d140c; color:var(--muted);
+    border-radius:20px; padding:7px 13px; font-size:12.5px; font-weight:600; cursor:pointer;}
+  .filters button.on{background:var(--gold); color:#2a1c0c; border-color:#8a6531;}
+
+  /* Detail / modal */
+  .sheet{position:fixed; inset:0; z-index:60; background:rgba(0,0,0,.55);
+    display:flex; align-items:flex-end; justify-content:center;}
+  .sheet .panel{background:var(--bg2); border:1px solid var(--line); border-radius:18px 18px 0 0;
+    width:100%; max-width:720px; max-height:92vh; overflow-y:auto; padding:16px 16px calc(28px + env(safe-area-inset-bottom));
+    box-shadow:0 -10px 40px rgba(0,0,0,.5);}
+  .grab{width:42px; height:5px; border-radius:3px; background:var(--line); margin:2px auto 12px;}
+  .dphoto{width:100%; height:200px; border-radius:14px; object-fit:cover; background:#1d140c;
+    border:1px solid var(--line); display:flex; align-items:center; justify-content:center; font-size:40px; color:var(--faint);}
+  .drow{display:flex; justify-content:space-between; gap:12px; padding:9px 0; border-bottom:1px solid var(--line); font-size:14px;}
+  .drow .k{color:var(--muted); flex:none;}
+  .drow .v{text-align:right; color:var(--ink); font-weight:600;}
+  .note{font-size:13.5px; line-height:1.5; color:var(--ink); margin-top:8px;}
+  .note.muted{color:var(--muted);}
+  .logentry{display:flex; justify-content:space-between; gap:10px; font-size:13px; padding:8px 0; border-bottom:1px solid var(--line);}
+  .logentry .d{color:var(--muted);}
+  .stars{color:var(--gold2); letter-spacing:1px;}
+  .row2{display:flex; gap:10px; margin-top:12px;}
+  .row2 .btn{flex:1;}
+  .empty{text-align:center; color:var(--faint); font-size:13.5px; padding:26px 10px; line-height:1.5;}
+  .hint{font-size:12px; color:var(--faint); margin-top:8px; line-height:1.45;}
+  .toast{position:fixed; bottom:96px; left:50%; transform:translateX(-50%);
+    background:var(--gold); color:#2a1c0c; font-weight:700; font-size:13px; padding:10px 16px;
+    border-radius:12px; z-index:80; box-shadow:0 6px 20px rgba(0,0,0,.4); opacity:0; pointer-events:none; transition:.2s;}
+  .toast.show{opacity:1;}
+  .stat{display:flex; gap:10px;}
+  .stat .box{flex:1; background:#1d140c; border:1px solid var(--line); border-radius:12px; padding:12px; text-align:center;}
+  .stat .num{font-size:22px; font-weight:800; color:var(--gold2);}
+  .stat .lbl{font-size:11px; color:var(--muted); margin-top:2px;}
+  .hide{display:none !important;}
+  a{color:var(--gold2);}
+
+  /* Spirit browser */
+  .comprow{display:flex; align-items:center; justify-content:space-between; gap:10px; width:100%;
+    background:#1d140c; border:1px solid var(--line); color:var(--ink); border-radius:11px;
+    padding:14px 14px; margin-bottom:9px; font-size:15px; font-weight:600; cursor:pointer; text-align:left;}
+  .comprow:active{transform:scale(.99);}
+  .comprow .cnt{font-size:12px; font-weight:700; color:var(--gold2); background:var(--chip);
+    border:1px solid var(--line); border-radius:20px; padding:3px 10px; min-width:30px; text-align:center;}
+  .crumbs{display:flex; align-items:center; gap:10px; margin:12px 2px 2px;}
+  .crumb-back{background:none; border:none; color:var(--gold2); font-size:14px; font-weight:600; cursor:pointer; padding:4px 2px;}
+  .crumb-here{font-size:13px; color:var(--muted); font-weight:600;}
+  .pill{display:inline-block; font-size:11px; font-weight:700; color:var(--gold2); background:var(--chip);
+    border:1px solid var(--line); border-radius:20px; padding:3px 10px; margin:0 6px 6px 0;}
+  .expertbox{background:#241a2e; border:1px solid #463a5e; border-radius:12px; padding:12px; margin-top:10px;
+    font-size:13.5px; line-height:1.5; color:#d8cdef;}
+  .expertbox b{color:#bca6ec;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="logo">🚬</div>
+    <div>
+      <h1>Ash &amp; Oak</h1>
+      <p id="subline">Humidor, inventory, and pairing advisor</p>
+    </div>
+  </header>
+  <div id="view"></div>
+</div>
+
+<nav class="nav" id="nav">
+  <button data-tab="now" class="active"><span class="ic">🎯</span>Now</button>
+  <button data-tab="cigars"><span class="ic">🚬</span>Cigars</button>
+  <button data-tab="spirits"><span class="ic">🥃</span>Spirits</button>
+  <button data-tab="add"><span class="ic">➕</span>Add</button>
+  <button data-tab="stats"><span class="ic">📊</span>You</button>
+</nav>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ----------------------------------------------------------------------------
+   Ash & Oak. Single-file PWA. Data in localStorage, photos in IndexedDB.
+---------------------------------------------------------------------------- */
+
+/* ------- Photo store (IndexedDB) ------- */
+const Photos = (() => {
+  let dbp;
+  function open(){
+    if (dbp) return dbp;
+    dbp = new Promise((res, rej) => {
+      const r = indexedDB.open('ashoak', 1);
+      r.onupgradeneeded = () => r.result.createObjectStore('photos');
+      r.onsuccess = () => res(r.result);
+      r.onerror = () => rej(r.error);
+    });
+    return dbp;
+  }
+  async function get(k){
+    const db = await open();
+    return new Promise((res) => {
+      const t = db.transaction('photos').objectStore('photos').get(k);
+      t.onsuccess = () => res(t.result || null);
+      t.onerror = () => res(null);
+    });
+  }
+  async function set(k, v){
+    const db = await open();
+    return new Promise((res) => {
+      const t = db.transaction('photos', 'readwrite').objectStore('photos').put(v, k);
+      t.onsuccess = () => res(true);
+      t.onerror = () => res(false);
+    });
+  }
+  async function del(k){
+    const db = await open();
+    return new Promise((res) => {
+      const t = db.transaction('photos', 'readwrite').objectStore('photos').delete(k);
+      t.onsuccess = () => res(true);
+      t.onerror = () => res(false);
+    });
+  }
+  return { get, set, del };
+})();
+
+/* ------- Seed inventory (from Alex's confirmed humidor and lounge stash) ------- */
+function C(o){ return Object.assign({ kind:'cigar', qty:1, location:'home', log:[], needsLog:false, special:false, dailyDriver:false, emptyOk:false,
+  manufacturer:'', factory:'', country:'', founded:'', history:'', sizes:'', price:'', strength:'', expert:'' }, o); }
+function S(o){ return Object.assign({ kind:'spirit', qty:1, log:[], owned:false, location:'catalog',
+  category:'', style:'', producer:'', distillery:'', region:'', country:'', abv:'', age:'', price:'', history:'', flavor:'', pairing:'', expert:'' }, o); }
+
+const SEED_CIGARS = [
+  C({ id:'c-opusx', name:'Arturo Fuente OpusX', brand:'Arturo Fuente', origin:'Dominican Republic', wrapper:'Dominican Rosado', wrapperType:'rosado', body:5, bodyLabel:'Full', category:'Premium', special:true,
+      flavor:'Cedar, baking spice, cocoa, leather, and a touch of red pepper. Dense and refined.',
+      pairing:'Reserve for a clean palate and a special occasion. Stands up to a bold spirit but shines on its own.' }),
+  C({ id:'c-fuente-granreserva', name:'Arturo Fuente Gran Reserva', brand:'Arturo Fuente', origin:'Dominican Republic', wrapper:'Natural', wrapperType:'natural', body:3, bodyLabel:'Medium', category:'Premium',
+      flavor:'Cedar, toasted nuts, light sweetness, and a smooth, easy draw.',
+      pairing:'Versatile. Good with black coffee or a light pour.' }),
+  C({ id:'c-andalusian', name:'LFD Andalusian Bull', brand:'La Flor Dominicana', origin:'Dominican Republic', wrapper:'Ecuadorian Habano', wrapperType:'habano', body:5, bodyLabel:'Full', category:'Premium', special:true, qty:3,
+      flavor:'Rich earth, black pepper, cocoa, espresso, and a leathery core. A power cigar with finesse.',
+      pairing:'Big pour of bourbon or after a heavy meal. Not for an empty stomach.' }),
+  C({ id:'c-perdomo20-mad', name:'Perdomo 20th Anniversary Maduro', brand:'Perdomo', origin:'Nicaragua', wrapper:'San Andres Maduro', wrapperType:'san-andres', body:4, bodyLabel:'Medium-Full', category:'Premium',
+      flavor:'Sweet espresso, cocoa, dark cherry, and black pepper on the finish.',
+      pairing:'Excellent with Nikka Yoichi or a wheated bourbon. The maduro sweetness loves wheated whiskey.' }),
+  C({ id:'c-rp1990', name:'Rocky Patel Vintage 1990', brand:'Rocky Patel', origin:'Honduras/Nicaragua', wrapper:'Broadleaf Maduro', wrapperType:'broadleaf', body:4, bodyLabel:'Medium-Full', category:'Premium',
+      flavor:'Sweet wood, coffee, caramel, and gentle spice. Aged and mellow for its strength.',
+      pairing:'Wheated bourbon or after dinner. Pairs with the Nikka maduro rule.' }),
+  C({ id:'c-partagas1845', name:'Partagas 1845', brand:'Partagas', origin:'Dominican/Nicaragua', wrapper:'Honduran', wrapperType:'habano', body:3, bodyLabel:'Medium', category:'Premium', qty:2,
+      flavor:'Earthy, woody, with cinnamon spice and a dry cocoa finish.',
+      pairing:'Black coffee or a light rum. Easygoing medium.' }),
+  C({ id:'c-byron1850', name:'Byron Seleccion 1850', brand:'Byron', origin:'Nicaragua', wrapper:'Aged Habano', wrapperType:'habano', body:4, bodyLabel:'Medium-Full', category:'Premium', special:true,
+      flavor:'Luxury blend, layered and complex. Belicoso with a tapered head. Gifted.',
+      pairing:'Clean palate, special occasion only. Do not waste it after bold food or a strong drink.' }),
+  C({ id:'c-atabey', name:'Atabey', brand:'Selected Tobacco', origin:'Costa Rica/Nicaragua', wrapper:'Ecuadorian Habano', wrapperType:'habano', body:3, bodyLabel:'Medium', category:'Premium', special:true,
+      flavor:'Floral, creamy, refined, and exotic. A collector cigar. Gifted.',
+      pairing:'Clean palate special occasion. Light pour or nothing at all so the cigar leads.' }),
+
+  C({ id:'c-oliva-nic', name:'Oliva Nicaragua', brand:'Oliva', origin:'Nicaragua', wrapper:'Habano', wrapperType:'habano', body:4, bodyLabel:'Medium-Full', category:'Nicaraguan', qty:5,
+      flavor:'Cedar, black pepper, cocoa, and a touch of sweetness.',
+      pairing:'Solid after a meal or with a fuller spirit.' }),
+  C({ id:'c-rp-flordesanandres', name:'Rocky Patel Flor de San Andres', brand:'Rocky Patel', origin:'Nicaragua', wrapper:'San Andres Maduro', wrapperType:'san-andres', body:4, bodyLabel:'Medium-Full', category:'Nicaraguan', qty:3,
+      flavor:'Dark chocolate, espresso, black pepper, and a sweet maduro core. Sugar skull band.',
+      pairing:'Great with Nikka Yoichi, wheated bourbon, or after dinner.' }),
+  C({ id:'c-ramonbueso', name:'Ramon Bueso Genesis The Project', brand:'Ramon Bueso', origin:'Honduras', wrapper:'Habano', wrapperType:'habano', body:4, bodyLabel:'Medium-Full', category:'Nicaraguan',
+      flavor:'Earth, cedar, cocoa, and a peppery kick. A lot of cigar for the money.',
+      pairing:'After a meal. Pairs with bourbon.' }),
+  C({ id:'c-casamagna', name:'Casa Magna', brand:'Casa Magna', origin:'Nicaragua', wrapper:'Brazilian Habano', wrapperType:'habano', body:4, bodyLabel:'Medium-Full', category:'Nicaraguan',
+      flavor:'Oak, white pepper, leather, and a mineral finish.',
+      pairing:'After a meal or with a neat whiskey.' }),
+  C({ id:'c-laherencia', name:'La Herencia Cubana Oscuro Fuerte', brand:'La Herencia Cubana', origin:'Nicaragua', wrapper:'Oscuro', wrapperType:'oscuro', body:5, bodyLabel:'Full', category:'Nicaraguan', qty:5,
+      flavor:'Bold, dark, and rich. Coffee, dark cocoa, and pepper.',
+      pairing:'Heavy meal or a big bourbon pour. Not for an empty stomach.' }),
+  C({ id:'c-lgc-serier', name:'La Gloria Cubana Serie R', brand:'La Gloria Cubana', origin:'Dominican/Nicaragua', wrapper:'Habano', wrapperType:'habano', body:5, bodyLabel:'Full', category:'Nicaraguan',
+      flavor:'Rich espresso, pepper, leather, and earth. A full, thick smoke.',
+      pairing:'After a heavy meal. Bourbon friendly.' }),
+  C({ id:'c-hupmann-aj', name:'H. Upmann by AJ Fernandez', brand:'H. Upmann', origin:'Nicaragua', wrapper:'Ecuadorian Habano', wrapperType:'habano', body:3, bodyLabel:'Medium', category:'Nicaraguan',
+      flavor:'Cedar, pepper, and a sweet, bready core. Tubed toro.',
+      pairing:'Coffee or a light spirit. Easy medium.' }),
+  C({ id:'c-diesel', name:'Diesel', brand:'Diesel', origin:'Nicaragua', wrapper:'Habano/Maduro', wrapperType:'maduro', body:5, bodyLabel:'Full', category:'Nicaraguan',
+      flavor:'Bold pepper, cocoa, espresso, and earth. Big value strength.',
+      pairing:'Heavy meal or bourbon. Avoid on an empty stomach.' }),
+  C({ id:'c-cohibablack', name:'Cohiba Black', brand:'Cohiba', origin:'Dominican Republic', wrapper:'Connecticut Maduro', wrapperType:'maduro', body:4, bodyLabel:'Medium-Full', category:'Nicaraguan', qty:5,
+      flavor:'Coffee, earth, dark cocoa, and a smooth sweetness.',
+      pairing:'After dinner or with a wheated bourbon.' }),
+  C({ id:'c-nicalibre', name:'Nica Libre by Oliva', brand:'Oliva', origin:'Nicaragua', wrapper:'Maduro', wrapperType:'maduro', body:4, bodyLabel:'Medium-Full', category:'Nicaraguan', qty:5,
+      flavor:'Cocoa, coffee, and sweetness. A Padron style profile at a fraction of the price.',
+      pairing:'Wheated bourbon loves this. Good after a meal.' }),
+  C({ id:'c-emanuel-robusto', name:'Emanuel Premium Robusto Maduro', brand:'Emanuel', origin:'Unconfirmed', wrapper:'Maduro', wrapperType:'maduro', body:3, bodyLabel:'Unlogged', category:'Nicaraguan', needsLog:true,
+      flavor:'', pairing:'No established personal tasting notes yet. Log this one before relying on a profile.' }),
+  C({ id:'c-emanuel-dynasty', name:'Emanuel Premium Dynasty', brand:'Emanuel', origin:'Unconfirmed', wrapper:'Natural', wrapperType:'natural', body:3, bodyLabel:'Unlogged', category:'Nicaraguan', needsLog:true,
+      flavor:'', pairing:'No established personal tasting notes yet. Log this one before relying on a profile.' }),
+
+  C({ id:'c-charteroak-shade', name:'Charter Oak Shade', brand:'Foundation', origin:'Nicaragua', wrapper:'Connecticut Shade', wrapperType:'ct-shade', body:2, bodyLabel:'Mild-Medium', category:'Everyday', dailyDriver:true,
+      flavor:'Creamy, cedar, cashew, and light hay. Smooth and bright.',
+      pairing:'The strongest all around daily driver for black coffee and working sessions. Also great with tequila blanco.' }),
+  C({ id:'c-charteroak-broadleaf', name:'Charter Oak Broadleaf', brand:'Foundation', origin:'Nicaragua', wrapper:'Broadleaf Maduro', wrapperType:'broadleaf', body:3, bodyLabel:'Medium', category:'Everyday',
+      flavor:'Sweet cocoa, coffee, and a touch of pepper. Affordable maduro.',
+      pairing:'Wheated bourbon or after a light meal.' }),
+  C({ id:'c-5vegas-classic', name:'5 Vegas Classic', brand:'5 Vegas', origin:'Honduras/Nicaragua', wrapper:'Habano', wrapperType:'habano', body:3, bodyLabel:'Medium', category:'Everyday', qty:6,
+      flavor:'Cedar, pepper, nuts, and a clean finish. Reliable everyday medium.',
+      pairing:'Coffee or a casual pour.' }),
+  C({ id:'c-cohiba-reddot', name:'Cohiba Red Dot', brand:'Cohiba', origin:'Dominican Republic', wrapper:'Cameroon', wrapperType:'natural', body:2, bodyLabel:'Mild-Medium', category:'Everyday', qty:10, emptyOk:true, dailyDriver:true,
+      flavor:'Cedar, honey, light wood, and a smooth, mild profile.',
+      pairing:'The go to for an empty stomach. Good with black coffee. Easy and forgiving.' }),
+  C({ id:'c-donjuro', name:'Don Juro Vintage Blend', brand:'Don Juro', origin:'Unconfirmed', wrapper:'Natural', wrapperType:'natural', body:2, bodyLabel:'Mild-Medium', category:'Everyday',
+      flavor:'Mild and woody. Limited personal notes so far.',
+      pairing:'Casual coffee smoke.' }),
+  C({ id:'c-blackpearl', name:'Black Pearl', brand:'Black Pearl', origin:'Honduras', wrapper:'Habano', wrapperType:'habano', body:3, bodyLabel:'Medium', category:'Everyday',
+      flavor:'Cedar, light pepper, and a touch of sweetness.',
+      pairing:'Casual medium with coffee or a light spirit.' }),
+  C({ id:'c-acid-kubakuba', name:'Acid Kuba Kuba', brand:'Drew Estate', origin:'Nicaragua', wrapper:'Connecticut (infused)', wrapperType:'infused', body:3, bodyLabel:'Medium', category:'Everyday',
+      flavor:'Sweet, aromatic, and floral from botanical infusion. Sweet tip.',
+      pairing:'A standalone novelty smoke. Pairs with coffee. Keep it away from delicate spirits it would overwhelm.' }),
+  C({ id:'c-deadwood', name:'Deadwood Tobacco Co.', brand:'Drew Estate', origin:'Nicaragua', wrapper:'Infused', wrapperType:'infused', body:3, bodyLabel:'Medium', category:'Everyday',
+      flavor:'Sweet and dessert like. Aromatic and easygoing.',
+      pairing:'Dessert pairing or a sweet standalone. Avoid pairing with a subtle spirit.' }),
+  C({ id:'c-westtampa', name:'West Tampa Tobacco Co.', brand:'West Tampa', origin:'Nicaragua', wrapper:'Habano/Connecticut', wrapperType:'habano', body:3, bodyLabel:'Medium', category:'Everyday',
+      flavor:'Cedar, light spice, and a clean medium body.',
+      pairing:'Coffee or a casual pour.' }),
+  C({ id:'c-rp-sumatra', name:'Rocky Patel Sumatra', brand:'Rocky Patel', origin:'Nicaragua/Honduras', wrapper:'Sumatra', wrapperType:'habano', body:3, bodyLabel:'Medium', category:'Everyday', qty:5,
+      flavor:'Sweet spice, cedar, and a smooth, slightly nutty finish.',
+      pairing:'Coffee or a light spirit.' }),
+  C({ id:'c-rp1999-ct', name:'Rocky Patel Vintage 1999 Connecticut', brand:'Rocky Patel', origin:'Honduras/Nicaragua', wrapper:'Connecticut Shade', wrapperType:'ct-shade', body:2, bodyLabel:'Mild-Medium', category:'Everyday',
+      flavor:'Creamy, cedar, coffee, and a smooth Connecticut profile.',
+      pairing:'Black coffee, tequila blanco, or a fasting session. A clean mild medium.' }),
+  C({ id:'c-cao-amazon', name:'CAO Amazon Basin 2026 Release', brand:'CAO', origin:'Brazil/Nicaragua', wrapper:'Brazilian Arapiraca', wrapperType:'maduro', body:4, bodyLabel:'Medium-Full', category:'Everyday', qty:7,
+      flavor:'Earthy, exotic spice, and a sweet core from rare Braganca tobacco. Picked up at Tap N Ash.',
+      pairing:'After a meal. Aging upside: smoke one or two fresh, rest several for six plus months, age one or two a year plus to watch the Braganca integrate.' }),
+
+  C({ id:'c-cohiba-habana', name:'Cohiba (Cuban, yellow band)', brand:'Cohiba', origin:'Cuba', wrapper:'Cuban', wrapperType:'cuban', body:4, bodyLabel:'Medium-Full', category:'Cuban', special:true, qty:2,
+      flavor:'Grassy, honey, cedar, and that signature Cohiba tang. From travel or gift, not US retail.',
+      pairing:'Clean palate. Light pour or nothing so the Cuban character leads.' }),
+  C({ id:'c-partagas-serieP', name:'Partagas Serie P (Cuban)', brand:'Partagas', origin:'Cuba', wrapper:'Cuban', wrapperType:'cuban', body:5, bodyLabel:'Full', category:'Cuban', special:true, qty:2,
+      flavor:'Earthy, leathery, with cocoa and spice. Classic full Cuban depth.',
+      pairing:'After a meal. A neat whiskey works but do not bury it.' }),
+  C({ id:'c-ramonallones', name:'Ramon Allones (Cuban)', brand:'Ramon Allones', origin:'Cuba', wrapper:'Cuban', wrapperType:'cuban', body:5, bodyLabel:'Full', category:'Cuban', special:true,
+      flavor:'Rich cocoa, earth, and a meaty, full body. A connoisseur Cuban.',
+      pairing:'Special occasion. After dinner with a measured pour.' }),
+  C({ id:'c-romeo-cuban', name:'Romeo y Julieta (Cuban, white tube)', brand:'Romeo y Julieta', origin:'Cuba', wrapper:'Cuban', wrapperType:'cuban', body:3, bodyLabel:'Medium', category:'Cuban', special:true,
+      flavor:'Floral, cedar, cream, and a smooth medium Cuban profile. White aluminum tube.',
+      pairing:'Coffee or a light pour. Approachable Cuban.' }),
+  C({ id:'c-oliva-serieO', name:'Oliva Serie O', brand:'Oliva', origin:'Nicaragua', wrapper:'Habano Sun Grown', wrapperType:'habano', body:4, bodyLabel:'Medium-Full', category:'Cuban', qty:2,
+      flavor:'Cedar, pepper, cocoa, and a touch of coffee. A lounge favorite.',
+      pairing:'After a meal or with a fuller spirit.' }),
+
+  C({ id:'c-slowburn-gemini', name:'Slow Burn Gemini', brand:'Slow Burn', origin:'Boutique', wrapper:'Unlogged', wrapperType:'habano', body:3, bodyLabel:'Unlogged', category:'Lounge', location:'lounge', needsLog:true,
+      flavor:'', pairing:'No established personal tasting notes yet. Merits a focused evaluation, not a distracted working session. Log it.' }),
+  C({ id:'c-pistoff', name:'Pistoff', brand:'Pistoff', origin:'Boutique', wrapper:'Maduro', wrapperType:'maduro', body:4, bodyLabel:'Medium-Full', category:'Lounge', location:'lounge', needsLog:true,
+      flavor:'', pairing:'Boutique lounge stick. Limited personal notes. Log before relying on a profile.' }),
+  C({ id:'c-pistoff-vengeance', name:'Pistoff Vengeance', brand:'Pistoff', origin:'Boutique', wrapper:'Maduro', wrapperType:'maduro', body:5, bodyLabel:'Full', category:'Lounge', location:'lounge', needsLog:true,
+      flavor:'', pairing:'Boutique lounge stick, the bolder of the pair. Limited notes. Log it.' }),
+  C({ id:'c-cohiba-purodom', name:'Cohiba Puro Dominicana', brand:'Cohiba', origin:'Dominican Republic', wrapper:'Dominican', wrapperType:'habano', body:4, bodyLabel:'Medium-Full', category:'Lounge', location:'lounge',
+      flavor:'Dominican puro. Cedar, cocoa, and a smooth, refined medium full body.',
+      pairing:'After a meal or with a measured pour.' }),
+  C({ id:'c-perdomo-aged', name:'Perdomo Aged', brand:'Perdomo', origin:'Nicaragua', wrapper:'Aged', wrapperType:'habano', body:4, bodyLabel:'Medium-Full', category:'Lounge', location:'lounge',
+      flavor:'Aged Nicaraguan. Smooth cedar, coffee, and gentle spice.',
+      pairing:'After dinner. Bourbon friendly.' }),
+  C({ id:'c-kristoff', name:'Kristoff', brand:'Kristoff', origin:'Nicaragua/Dominican', wrapper:'Maduro', wrapperType:'maduro', body:4, bodyLabel:'Medium-Full', category:'Lounge', location:'lounge',
+      flavor:'Cocoa, coffee, earth, and a sweet maduro finish. Pigtail cap.',
+      pairing:'Wheated bourbon or after a meal.' }),
+  C({ id:'c-foreign-affair', name:'Foreign Affair', brand:'Foreign Affair', origin:'Boutique', wrapper:'Unlogged', wrapperType:'habano', body:3, bodyLabel:'Unlogged', category:'Lounge', location:'lounge', needsLog:true,
+      flavor:'', pairing:'No established personal tasting notes yet. Flag for future logging rather than guessing.' })
+];
+
+const SEED_SPIRITS = [
+  /* ===== Owned, on the Tap N Ash bar ===== */
+  S({ id:'s-blackeden', name:'Black Eden 1912', category:'Bourbon', style:'Bourbon', owned:true, location:'lounge',
+      producer:'Not yet verified', country:'USA',
+      flavor:'Confirmed on the Tap N Ash bar. A bourbon for after dinner pairings.',
+      history:'Confirmed on the lounge bar. Producer, mash bill, and proof are not yet verified. Confirm the details with Tap N Ash before relying on them.',
+      pairing:'Bourbon complements maduro sweetness. Try it with Flor de San Andres, Nica Libre, or Cohiba Black. Small pour, one to one and a half ounces, sip between draws.', price:'Confirm at the bar' }),
+  S({ id:'s-nikka-yoichi', name:'Nikka Yoichi Single Malt', category:'Whisky', style:'Japanese Single Malt', owned:true, location:'lounge',
+      producer:'Nikka Whisky Distilling (Asahi Group)', distillery:'Yoichi Distillery', region:'Hokkaido', country:'Japan', abv:'45%',
+      founded:'1934', history:'Founded by Masataka Taketsuru, the father of Japanese whisky, who chose the cold, coastal Yoichi site in Hokkaido for its resemblance to Scotland. Yoichi still uses direct coal-fired pot stills, a rare and labor intensive method.',
+      flavor:'Peat smoke, brine and sea salt, dried fruit, and a firm oak backbone. Coastal and robust for a Japanese malt.',
+      pairing:'Pairs best with San Andres maduro or Connecticut shade wrappers. Serve neat. Add a small water drop at the halfway point of the cigar. No ice for single malts.', price:'Approx 70 to 110 USD, varies by release' }),
+
+  /* ===== Tequila ===== */
+  S({ id:'s-tq-eltequileno-blanco', name:'El Tequileño Blanco', category:'Tequila', style:'Blanco',
+      producer:'Tequilera Newton e Hijos (NOM 1108)', distillery:'Tequila, Jalisco', region:'Lowlands and Highlands blend', country:'Mexico', abv:'40%',
+      founded:'1959', history:'Founded by Don Jorge Salles Cuervo in the town of Tequila. A classic cantina brand that earned a US cult following through the bartender community and its Platinum bottling.',
+      flavor:'Cooked agave, citrus, white pepper, and a clean mineral finish.',
+      pairing:'Connecticut shade. Keep the cigar light so the agave leads.', price:'Approx 30 to 40 USD' }),
+  S({ id:'s-tq-fortaleza-blanco', name:'Fortaleza Blanco', category:'Tequila', style:'Blanco',
+      producer:'Tequila Los Abuelos (NOM 1493)', distillery:'Destileria La Fortaleza, Tequila', region:'Lowlands', country:'Mexico', abv:'40%',
+      founded:'2005', history:'Guillermo Sauza, great great grandson of Don Cenobio Sauza, revived the family heritage at a restored 1800s distillery using a stone tahona, open fermentation, and copper pot stills.',
+      flavor:'Bright cooked agave, citrus, olive brine, and black pepper. A benchmark traditional blanco.',
+      pairing:'Connecticut shade or a mild natural. A connoisseur sipping tequila.', price:'Approx 45 to 55 USD' }),
+  S({ id:'s-tq-ocho-plata', name:'Tequila Ocho Plata', category:'Tequila', style:'Blanco',
+      producer:'La Alteña, Camarena family (NOM 1474)', distillery:'Arandas, Jalisco', region:'Highlands', country:'Mexico', abv:'40%',
+      founded:'2008', history:'A collaboration between master distiller Carlos Camarena and the late Tomas Estes. The first single estate, vintage dated tequila that highlights the flavor of a specific field each year.',
+      flavor:'Vegetal agave, citrus zest, and white pepper. Terroir driven and crisp.',
+      pairing:'Connecticut shade.', price:'Approx 40 to 50 USD' }),
+  S({ id:'s-tq-donjulio-blanco', name:'Don Julio Blanco', category:'Tequila', style:'Blanco',
+      producer:'Don Julio (Diageo, NOM 1449)', distillery:'La Primavera, Atotonilco el Alto', region:'Highlands', country:'Mexico', abv:'40%',
+      founded:'1942', history:'Founded by Don Julio González, a pioneer of premium sipping tequila who planted agave at higher density for a smoother spirit.',
+      flavor:'Agave, citrus, and a light peppery finish. Smooth and approachable.',
+      pairing:'Connecticut shade or a mild medium.', price:'Approx 45 to 55 USD' }),
+
+  S({ id:'s-tq-eltequileno-repo', name:'El Tequileño Reposado', category:'Tequila', style:'Reposado',
+      producer:'Tequilera Newton e Hijos (NOM 1108)', distillery:'Tequila, Jalisco', region:'Jalisco', country:'Mexico', abv:'40%',
+      age:'Rested in large oak pipones', history:'The reposado from the classic 1959 house, rested in very large oak tanks for a soft, lightly oaked profile that keeps the agave front and center.',
+      flavor:'Cooked agave, vanilla, baking spice, and citrus. Smooth and easy.',
+      pairing:'Connecticut shade or a light shade maduro.', price:'Approx 35 to 45 USD' }),
+  S({ id:'s-tq-fortaleza-repo', name:'Fortaleza Reposado', category:'Tequila', style:'Reposado',
+      producer:'Tequila Los Abuelos (NOM 1493)', distillery:'Destileria La Fortaleza, Tequila', region:'Lowlands', country:'Mexico', abv:'40%',
+      age:'About 6 months, American oak', history:'A cult favorite reposado from the Sauza heritage distillery, tahona crushed and pot distilled.',
+      flavor:'Cooked agave, butterscotch, caramel, and pepper. Rich and rounded.',
+      pairing:'A medium natural or a light maduro.', price:'Approx 55 to 70 USD' }),
+  S({ id:'s-tq-donjulio-repo', name:'Don Julio Reposado', category:'Tequila', style:'Reposado',
+      producer:'Don Julio (Diageo, NOM 1449)', distillery:'La Primavera', region:'Highlands', country:'Mexico', abv:'40%',
+      age:'About 8 months, American oak', history:'The rested expression of the 1942 founded luxury house.',
+      flavor:'Agave, caramel, vanilla, and gentle oak spice.',
+      pairing:'A mild medium cigar or a light maduro.', price:'Approx 50 to 60 USD' }),
+  S({ id:'s-tq-casamigos-repo', name:'Casamigos Reposado', category:'Tequila', style:'Reposado',
+      producer:'Casamigos (Diageo, NOM 1416)', distillery:'Jalisco', region:'Highlands', country:'Mexico', abv:'40%',
+      age:'7 months', founded:'2013', history:'Launched by George Clooney, Rande Gerber, and Mike Meldman, later sold to Diageo. Built for a soft, sweet, very smooth profile.',
+      flavor:'Soft caramel, vanilla, mild agave, and a sweet finish.',
+      pairing:'A mild natural cigar.', price:'Approx 50 to 60 USD' }),
+
+  S({ id:'s-tq-donjulio-1942', name:'Don Julio 1942', category:'Tequila', style:'Añejo',
+      producer:'Don Julio (Diageo, NOM 1449)', distillery:'La Primavera', region:'Highlands', country:'Mexico', abv:'38%',
+      age:'Minimum 2.5 years', history:'A celebrated luxury añejo named for the year Don Julio began producing tequila. A status bottle in lounges and clubs.',
+      flavor:'Caramel, vanilla, roasted agave, and warm oak. Dessert like.',
+      pairing:'A maduro after dinner.', price:'Approx 160 to 210 USD' }),
+  S({ id:'s-tq-fortaleza-anejo', name:'Fortaleza Añejo', category:'Tequila', style:'Añejo',
+      producer:'Tequila Los Abuelos (NOM 1493)', distillery:'Destileria La Fortaleza', region:'Lowlands', country:'Mexico', abv:'40%',
+      age:'About 18 months', history:'The aged expression of the traditional Sauza heritage distillery.',
+      flavor:'Cooked agave, caramel, dried fruit, and oak spice.',
+      pairing:'A medium maduro.', price:'Approx 80 to 95 USD' }),
+
+  S({ id:'s-tq-claseazul-ultra', name:'Clase Azul Ultra Extra Añejo', category:'Tequila', style:'Extra Añejo',
+      producer:'Clase Azul (NOM 1558)', distillery:'Jesús María, Los Altos', region:'Highlands', country:'Mexico', abv:'40%',
+      age:'5 years', history:'An ultra premium extra añejo aged five years and presented in a hand painted ceramic decanter with platinum and agave fiber detailing.',
+      flavor:'Butterscotch, dark chocolate, dried fruit, sherry oak, and vanilla.',
+      pairing:'A special occasion only. Reserve for a Cuban or a top maduro.', price:'Approx 1700 USD and up' }),
+  S({ id:'s-tq-donjulio-70', name:'Don Julio 70 Cristalino', category:'Tequila', style:'Cristalino',
+      producer:'Don Julio (Diageo, NOM 1449)', distillery:'La Primavera', region:'Highlands', country:'Mexico', abv:'35%',
+      age:'Añejo, charcoal filtered clear', founded:'2012', history:'A claro añejo that started the cristalino trend. Aged like an añejo then filtered to a clear spirit that keeps the oak sweetness.',
+      flavor:'Vanilla, light caramel, agave, and a clean finish.',
+      pairing:'A Connecticut shade or a mild natural.', price:'Approx 60 to 75 USD' }),
+
+  /* ===== Bourbon ===== */
+  S({ id:'s-bb-makers', name:"Maker's Mark", category:'Bourbon', style:'Wheated',
+      producer:'Beam Suntory', distillery:'Star Hill Farm, Loretto', region:'Kentucky', country:'USA', abv:'45%',
+      founded:'1958', history:'Created by Bill Samuels Sr., who burned the family recipe and built a softer wheated bourbon. Known for the hand dipped red wax seal.',
+      flavor:'Caramel, vanilla, soft wheat bread, and gentle oak.',
+      pairing:'Wheated sweetness loves a maduro. Try Nica Libre or Cohiba Black.', price:'Approx 25 to 35 USD' }),
+  S({ id:'s-bb-weller-sr', name:'W.L. Weller Special Reserve', category:'Bourbon', style:'Wheated',
+      producer:'Buffalo Trace Distillery', distillery:'Frankfort', region:'Kentucky', country:'USA', abv:'45%',
+      history:'A wheated bourbon from the same distillery and recipe family as Pappy Van Winkle, which earned it the nickname the poor mans Pappy. Often allocated and hard to find at the listed price.',
+      flavor:'Honey, caramel, soft baking spice, and light oak.',
+      pairing:'A San Andres or broadleaf maduro.', price:'Approx 30 USD MSRP, often higher on the shelf' }),
+  S({ id:'s-bb-larceny', name:'Larceny Small Batch', category:'Bourbon', style:'Wheated',
+      producer:'Heaven Hill', distillery:'Bardstown', region:'Kentucky', country:'USA', abv:'46%',
+      history:'A wheated bourbon named for the legend of John E. Fitzgerald, a treasury agent said to dip into the best barrels.',
+      flavor:'Caramel, honey, bread, and a touch of butterscotch.',
+      pairing:'A maduro after a meal.', price:'Approx 25 to 30 USD' }),
+  S({ id:'s-bb-pappy15', name:'Pappy Van Winkle 15 Year', category:'Bourbon', style:'Wheated',
+      producer:'Old Rip Van Winkle, made at Buffalo Trace', distillery:'Frankfort', region:'Kentucky', country:'USA', abv:'53.5%',
+      age:'15 years', history:'The most hyped wheated bourbon in the world. Extremely allocated, with secondary prices far above the suggested retail.',
+      flavor:'Rich caramel, dried fruit, oak, vanilla, and a long sweet finish.',
+      pairing:'A top maduro or a Cuban, special occasion.', price:'Approx 120 USD MSRP, secondary 1000 USD and up' }),
+  S({ id:'s-bb-fourroses-sb', name:'Four Roses Single Barrel', category:'Bourbon', style:'Traditional / High Rye',
+      producer:'Four Roses', distillery:'Lawrenceburg', region:'Kentucky', country:'USA', abv:'50%',
+      history:'A high rye single barrel from a distillery known for blending ten distinct bourbon recipes.',
+      flavor:'Ripe fruit, baking spice, caramel, and a dry, spicy finish.',
+      pairing:'A medium full habano or Nicaraguan.', price:'Approx 45 to 55 USD' }),
+  S({ id:'s-bb-wt101', name:'Wild Turkey 101', category:'Bourbon', style:'Traditional / High Rye',
+      producer:'Wild Turkey (Campari)', distillery:'Lawrenceburg', region:'Kentucky', country:'USA', abv:'50.5%',
+      history:'A bold, high proof staple shaped by the long tenure of master distillers Jimmy and Eddie Russell.',
+      flavor:'Caramel, vanilla, char, and a punchy rye spice.',
+      pairing:'A full Nicaraguan or a bold maduro.', price:'Approx 25 to 30 USD' }),
+  S({ id:'s-bb-buffalotrace', name:'Buffalo Trace', category:'Bourbon', style:'Traditional / High Rye',
+      producer:'Buffalo Trace Distillery', distillery:'Frankfort', region:'Kentucky', country:'USA', abv:'45%',
+      history:'The flagship bourbon of one of the most awarded distilleries in America, named for the old buffalo crossing on the Kentucky River.',
+      flavor:'Caramel, vanilla, oak, and a touch of brown sugar and spice.',
+      pairing:'A medium full cigar or a maduro.', price:'Approx 30 USD, often allocated' }),
+  S({ id:'s-bb-blantons', name:"Blanton's Single Barrel", category:'Bourbon', style:'Single Barrel / Allocated',
+      producer:'Buffalo Trace Distillery', distillery:'Frankfort', region:'Kentucky', country:'USA', abv:'46.5%',
+      founded:'1984', history:'Widely credited as the first commercial single barrel bourbon. Known for the racehorse and jockey stoppers that spell out B-L-A-N-T-O-N-S across a collection.',
+      flavor:'Caramel, citrus, vanilla, and a warm, spicy oak finish.',
+      pairing:'A medium full habano.', price:'Approx 65 USD MSRP, often higher' }),
+  S({ id:'s-bb-eaglerare', name:'Eagle Rare 10 Year', category:'Bourbon', style:'Single Barrel / Allocated',
+      producer:'Buffalo Trace Distillery', distillery:'Frankfort', region:'Kentucky', country:'USA', abv:'45%',
+      age:'10 years', history:'A well aged, allocated bourbon from Buffalo Trace with a loyal following.',
+      flavor:'Toffee, honey, oak, and a dry, elegant finish.',
+      pairing:'A maduro or a medium full Nicaraguan.', price:'Approx 40 USD MSRP, often higher' }),
+
+  /* ===== Whisky ===== */
+  S({ id:'s-wh-yamazaki12', name:'Yamazaki 12 Year', category:'Whisky', style:'Japanese Single Malt',
+      producer:'Suntory', distillery:'Yamazaki Distillery', region:'Near Kyoto', country:'Japan', abv:'43%', age:'12 years',
+      founded:'1923', history:'Japans first and oldest malt whisky distillery, founded by Shinjiro Torii. Famous for partial maturation in rare Japanese mizunara oak.',
+      flavor:'Honey, candied fruit, mizunara incense, and light spice.',
+      pairing:'A mild medium Connecticut or a refined natural.', price:'Approx 160 to 220 USD, allocated' }),
+  S({ id:'s-wh-macallan12', name:'Macallan 12 Sherry Oak', category:'Whisky', style:'Scotch Single Malt',
+      producer:'The Macallan', distillery:'Speyside', region:'Speyside', country:'Scotland', abv:'43%', age:'12 years',
+      history:'A benchmark sherried Speyside malt matured in seasoned Spanish sherry oak casks.',
+      flavor:'Dried fruit, sherry sweetness, oak, and dark chocolate.',
+      pairing:'A maduro or a medium full habano.', price:'Approx 65 to 80 USD' }),
+  S({ id:'s-wh-lagavulin16', name:'Lagavulin 16 Year', category:'Whisky', style:'Scotch Single Malt',
+      producer:'Lagavulin (Diageo)', distillery:'Islay', region:'Islay', country:'Scotland', abv:'43%', age:'16 years',
+      history:'A classic heavily peated Islay malt, one of the most revered smoky single malts.',
+      flavor:'Heavy peat smoke, iodine, seaweed, and a sweet, long finish.',
+      pairing:'A bold maduro or a full Nicaraguan that can stand up to the smoke.', price:'Approx 90 to 110 USD' }),
+  S({ id:'s-wh-laphroaig10', name:'Laphroaig 10 Year', category:'Whisky', style:'Scotch Single Malt',
+      producer:'Laphroaig (Beam Suntory)', distillery:'Islay', region:'Islay', country:'Scotland', abv:'43%', age:'10 years',
+      history:'A famously medicinal and divisive Islay malt with a long history and a royal warrant.',
+      flavor:'Medicinal peat, seaweed, smoke, and a touch of sweetness.',
+      pairing:'A full bodied cigar that can match the intensity.', price:'Approx 50 to 60 USD' }),
+
+  /* ===== Rum ===== */
+  S({ id:'s-rm-jm-blanc', name:'Rhum JM Agricole Blanc', category:'Rum', style:'Rhum Agricole',
+      producer:'Distillerie JM', distillery:'Macouba', region:'Martinique', country:'France (Martinique AOC)', abv:'50%',
+      history:'A cane juice rhum made on the slopes of Mount Pelée, under the protected Martinique AOC.',
+      flavor:'Grassy, floral, vegetal cane, and white pepper. Vibrant and delicate.',
+      pairing:'A mild to medium refined cigar that complements rather than overwhelms.', price:'Approx 35 to 45 USD' }),
+  S({ id:'s-rm-clement-vsop', name:'Clément VSOP', category:'Rum', style:'Rhum Agricole',
+      producer:'Habitation Clément', distillery:'Le François', region:'Martinique', country:'France (Martinique AOC)', abv:'40%',
+      age:'Aged agricole', history:'An aged cane juice rhum from a historic Martinique estate.',
+      flavor:'Oak, vanilla, banana, and a soft grassy core.',
+      pairing:'A mild medium natural or Connecticut.', price:'Approx 35 to 45 USD' }),
+  S({ id:'s-rm-zacapa23', name:'Ron Zacapa 23', category:'Rum', style:'Aged Rum',
+      producer:'Ron Zacapa (Diageo)', distillery:'Solera blend', region:'Guatemala highlands', country:'Guatemala', abv:'40%',
+      history:'A solera aged rum blended from spirits aged up to 23 years at high altitude.',
+      flavor:'Caramel, vanilla, raisin, honey, and toffee. Sweet and rich.',
+      pairing:'A maduro for a dessert like pairing.', price:'Approx 45 to 60 USD' }),
+  S({ id:'s-rm-appleton12', name:'Appleton Estate 12 Year', category:'Rum', style:'Aged Rum',
+      producer:'Appleton Estate', distillery:'Nassau Valley', region:'Jamaica', country:'Jamaica', abv:'43%', age:'12 years',
+      history:'A Jamaican estate rum known for its funky pot still esters and tropical character.',
+      flavor:'Orange peel, oak, brown sugar, allspice, and a hint of Jamaican funk.',
+      pairing:'A medium full habano or a maduro.', price:'Approx 35 to 45 USD' }),
+
+  /* ===== Reference, not a spirit ===== */
+  S({ id:'s-black-coffee', name:'Black Coffee', category:'Other', style:'Coffee',
+      producer:'Your kitchen', country:'',
+      flavor:'Black, no cream or sugar. The everyday working session companion.',
+      history:'Not a spirit, kept here as a pairing reference because it is the most common session companion.',
+      pairing:'Pairs cleanly with mild to medium Connecticut or natural wrappers. Charter Oak Shade is the validated daily driver. CAO Brazilia Toro is a noted pick if available.', price:'' })
+];
+
+/* ===== Cigar reference detail, merged into the seed at load (maker, factory, history, cost) ===== */
+const CIGAR_DETAILS = {
+  'c-opusx': { manufacturer:'Tabacalera A. Fuente y Cia', factory:'Santiago, Dominican Republic', country:'Dominican Republic', founded:'1995', price:'Approx 25 to 45 per stick, scarce', history:'The first Dominican puro grown with a Dominican wrapper, from the Chateau de la Fuente estate. Debuted in 1995 by Carlos Fuente Sr. and Carlos Fuente Jr. and remains one of the most sought after cigars in the world.' },
+  'c-fuente-granreserva': { manufacturer:'Tabacalera A. Fuente y Cia', factory:'Santiago, Dominican Republic', country:'Dominican Republic', founded:'1912', price:'Approx 7 to 11 per stick', history:'The core Arturo Fuente line from a family that has made cigars since 1912. Reliable, well constructed, and widely available.' },
+  'c-andalusian': { manufacturer:'La Flor Dominicana', factory:'Tamboril, Dominican Republic', country:'Dominican Republic', founded:'2016', price:'Approx 15 to 22 per stick', history:'A Litto Gomez release that was named Cigar Aficionado Cigar of the Year for 2016. A powerful but refined flagship.' },
+  'c-perdomo20-mad': { manufacturer:'Tabacalera Perdomo', factory:'Esteli, Nicaragua', country:'Nicaragua', price:'Approx 9 to 13 per stick', history:'Nick Perdomo flagship, made from Cuban seed Nicaraguan tobacco that is extra aged and bourbon barrel aged for the anniversary line.' },
+  'c-rp1990': { manufacturer:'Rocky Patel Premium Cigars', factory:'TAVICUSA, Esteli, Nicaragua', country:'Honduras and Nicaragua', price:'Approx 8 to 11 per stick', history:'Named for the vintage year of the aged tobacco in the blend. One of the cigars that built the Rocky Patel name.' },
+  'c-partagas1845': { manufacturer:'General Cigar Co.', factory:'Dominican Republic', country:'Dominican Republic', price:'Approx 7 to 9 per stick', history:'A non Cuban Partagas line by General Cigar, named for the brand original 1845 founding in Havana.' },
+  'c-byron1850': { manufacturer:'United Cigars and Selected Tobacco (Nelson Alfonso)', factory:'Central America', country:'Nicaragua and Costa Rica', price:'Approx 40 to 70 per stick', history:'An ultra premium line from the team behind Atabey, with old world vitolas and lavish presentation. Gifted.' },
+  'c-atabey': { manufacturer:'Selected Tobacco (Nelson Alfonso)', factory:'Costa Rica', country:'Costa Rica and Nicaragua', price:'Approx 30 to 50 per stick', history:'Part of the luxury trilogy of brands named for Taino deities. Highly allocated and collected. Gifted.' },
+  'c-oliva-nic': { manufacturer:'Oliva Cigar Co.', factory:'Esteli, Nicaragua', country:'Nicaragua', price:'Approx 6 to 9 per stick', history:'From a family with deep Nicaraguan tobacco roots, now part of the J. Cortes group.' },
+  'c-rp-flordesanandres': { manufacturer:'Rocky Patel Premium Cigars', factory:'TAVICUSA, Esteli, Nicaragua', country:'Nicaragua', price:'Approx 7 to 10 per stick', history:'Built around a Mexican San Andres maduro wrapper and dressed in a sugar skull band.' },
+  'c-ramonbueso': { manufacturer:'Ramon Bueso', factory:'Honduras', country:'Honduras', price:'Approx 4 to 6 per stick', history:'A value driven Honduran blend that punches above its price.' },
+  'c-casamagna': { manufacturer:'Quesada Cigars and Plasencia', factory:'Esteli, Nicaragua', country:'Nicaragua', price:'Approx 6 to 9 per stick', history:'The robusto was named Cigar Aficionado Cigar of the Year for 2008.' },
+  'c-laherencia': { manufacturer:'Not yet verified', factory:'Nicaragua', country:'Nicaragua', price:'Approx 5 to 7 per stick', history:'A bold oscuro value blend. Maker details are not fully verified, confirm before relying on them.' },
+  'c-lgc-serier': { manufacturer:'General Cigar Co.', factory:'Dominican Republic and Honduras', country:'Dominican Republic', price:'Approx 7 to 10 per stick', history:'The big ring, full bodied Serie R that pushed La Gloria Cubana into bolder territory.' },
+  'c-hupmann-aj': { manufacturer:'Altadis USA, blended by AJ Fernandez', factory:'Tabacalera AJ Fernandez, Esteli, Nicaragua', country:'Nicaragua', price:'Approx 6 to 9 per stick', history:'A modern AJ Fernandez take on the historic H. Upmann marque.' },
+  'c-diesel': { manufacturer:'AJ Fernandez for Cigars International', factory:'Esteli, Nicaragua', country:'Nicaragua', price:'Approx 5 to 7 per stick', history:'A bold value brand blended by AJ Fernandez.' },
+  'c-cohibablack': { manufacturer:'General Cigar Co.', factory:'Dominican Republic', country:'Dominican Republic', price:'Approx 8 to 12 per stick', history:'The dark, Connecticut maduro wrapped member of the Dominican Cohiba family, distinct from Cuban Cohiba.' },
+  'c-nicalibre': { manufacturer:'Oliva for Cigars International', factory:'Esteli, Nicaragua', country:'Nicaragua', price:'Approx 4 to 5 per stick', history:'A widely loved homage to the Padron 1964 profile at a fraction of the price.' },
+  'c-charteroak-shade': { manufacturer:'Foundation Cigar Co. (Nicholas Melillo)', factory:'AGANORSA, Esteli, Nicaragua', country:'Nicaragua', price:'Approx 5 to 7 per stick', history:'Nick Melillo value line honoring Connecticut tobacco heritage, built with quality AGANORSA filler.' },
+  'c-charteroak-broadleaf': { manufacturer:'Foundation Cigar Co. (Nicholas Melillo)', factory:'AGANORSA, Esteli, Nicaragua', country:'Nicaragua', price:'Approx 5 to 7 per stick', history:'The broadleaf maduro counterpart to the shade, an affordable everyday maduro.' },
+  'c-5vegas-classic': { manufacturer:'Cigars International', factory:'Honduras and Nicaragua', country:'Honduras and Nicaragua', price:'Approx 4 to 6 per stick', history:'A long running value brand and a staple bundle smoke.' },
+  'c-cohiba-reddot': { manufacturer:'General Cigar Co.', factory:'Dominican Republic', country:'Dominican Republic', price:'Approx 9 to 14 per stick', history:'The US and Dominican Cohiba with the red dot band, a separate brand from Cuban Cohiba.' },
+  'c-donjuro': { manufacturer:'Not yet verified', factory:'', country:'', price:'', history:'Maker and origin details are not verified. Confirm before relying on them.' },
+  'c-blackpearl': { manufacturer:'Not yet verified', factory:'Honduras', country:'Honduras', price:'Approx 5 to 7 per stick', history:'A value Honduran line. Confirm full maker details before relying on them.' },
+  'c-acid-kubakuba': { manufacturer:'Drew Estate', factory:'La Gran Fabrica Drew Estate, Esteli, Nicaragua', country:'Nicaragua', price:'Approx 8 to 11 per stick', history:'Part of the Acid line that Jonathan Drew built around botanical and essential oil infusion. Kuba Kuba is the sweet, fat, popular vitola.' },
+  'c-deadwood': { manufacturer:'Drew Estate', factory:'La Gran Fabrica Drew Estate, Esteli, Nicaragua', country:'Nicaragua', price:'Approx 8 to 12 per stick', history:'A sweet, infused line born from the Deadwood Tobacco shop in South Dakota and made by Drew Estate.' },
+  'c-westtampa': { manufacturer:'West Tampa Tobacco Co.', factory:'Nicaragua', country:'Nicaragua', price:'Approx 7 to 9 per stick', history:'A brand reviving the cigar heritage of West Tampa, made with Nicaraguan tobacco.' },
+  'c-rp-sumatra': { manufacturer:'Rocky Patel Premium Cigars', factory:'Honduras and Nicaragua', country:'Honduras and Nicaragua', price:'Approx 6 to 8 per stick', history:'A smooth, value Rocky Patel built on a sweet Sumatra wrapper.' },
+  'c-rp1999-ct': { manufacturer:'Rocky Patel Premium Cigars', factory:'Honduras and Nicaragua', country:'Honduras and Nicaragua', price:'Approx 6 to 9 per stick', history:'A mild to medium Connecticut shade Rocky Patel, a clean daytime smoke.' },
+  'c-cao-amazon': { manufacturer:'CAO (General Cigar Co.)', factory:'STG Esteli, Nicaragua', country:'Brazil and Nicaragua', price:'Approx 9 to 12 per stick', history:'Built around rare Brazilian Braganca tobacco harvested in the Amazon and floated downriver. Originally a 2014 release with strong aging reputation.' },
+  'c-cohiba-habana': { manufacturer:'Habanos S.A.', factory:'El Laguito, Havana, Cuba', country:'Cuba', price:'Varies, travel or gift', history:'The Cuban Cohiba, originally made for Fidel Castro before its public release in the 1980s. From travel or gift, not US retail.' },
+  'c-partagas-serieP': { manufacturer:'Habanos S.A.', factory:'Havana, Cuba', country:'Cuba', price:'Varies, travel or gift', history:'A full bodied Cuban marque dating to 1845, prized for earthy, leathery depth. From travel or gift.' },
+  'c-ramonallones': { manufacturer:'Habanos S.A.', factory:'Havana, Cuba', country:'Cuba', price:'Varies, travel or gift', history:'A historic Cuban brand founded in 1837, beloved by connoisseurs for rich, meaty smoke. From travel or gift.' },
+  'c-romeo-cuban': { manufacturer:'Habanos S.A.', factory:'Havana, Cuba', country:'Cuba', price:'Varies, travel or gift', history:'One of the most famous Cuban marques, founded 1875. The white tube is an approachable, floral medium. From travel or gift.' },
+  'c-oliva-serieO': { manufacturer:'Oliva Cigar Co.', factory:'Esteli, Nicaragua', country:'Nicaragua', price:'Approx 6 to 8 per stick', history:'A Nicaraguan puro and a long standing lounge favorite for its value and flavor.' },
+  'c-slowburn-gemini': { manufacturer:'Slow Burn', factory:'', country:'', price:'', history:'Boutique lounge stick with limited verified information. Merits a focused evaluation rather than a distracted session. Log it.' },
+  'c-pistoff': { manufacturer:'Pistoff Cigars', factory:'', country:'', price:'', history:'Boutique lounge brand with limited verified information. Confirm details before relying on them.' },
+  'c-pistoff-vengeance': { manufacturer:'Pistoff Cigars', factory:'', country:'', price:'', history:'The bolder boutique Pistoff. Limited verified information.' },
+  'c-cohiba-purodom': { manufacturer:'General Cigar Co.', factory:'Dominican Republic', country:'Dominican Republic', price:'Approx 10 to 14 per stick', history:'A Dominican puro within the non Cuban Cohiba family.' },
+  'c-perdomo-aged': { manufacturer:'Tabacalera Perdomo', factory:'Esteli, Nicaragua', country:'Nicaragua', price:'Approx 6 to 9 per stick', history:'An aged Nicaraguan Perdomo, smooth and value driven.' },
+  'c-kristoff': { manufacturer:'Kristoff Cigars (Glen Case)', factory:'Dominican Republic', country:'Dominican Republic and Nicaragua', price:'Approx 8 to 11 per stick', history:'Known for a rustic pigtail cap and a closed foot, a boutique style maduro.' },
+  'c-foreign-affair': { manufacturer:'Not yet verified', factory:'', country:'', price:'', history:'Boutique lounge stick with no established personal notes and limited verified information. Flag for future logging rather than guessing.' }
+};
+
+/* ===== Expert and critic consensus, where it is well documented ===== */
+const EXPERT = {
+  'c-opusx': 'Consistently rated in the 90s by Cigar Aficionado and treated as one of the most collectible Dominican cigars ever made.',
+  'c-andalusian': 'Cigar Aficionado named the LFD Andalusian Bull its number one Cigar of the Year for 2016, scoring it 97 points.',
+  'c-casamagna': 'The Casa Magna Robusto was Cigar Aficionado Cigar of the Year for 2008 at 93 points.',
+  'c-perdomo20-mad': 'The Perdomo 20th Anniversary Maduro has drawn ratings in the low to mid 90s across major publications.',
+  'c-cao-amazon': 'CAO Amazon Basin earned strong reviews on release for its rare Braganca tobacco, with scores in the low 90s.',
+  'c-rp1990': 'The Rocky Patel Vintage 1990 is a long time critical favorite that helped establish the brand, often rated in the high 80s to low 90s.',
+  's-tq-fortaleza-blanco': 'Widely treated by tequila enthusiasts and bartenders as a benchmark traditional, tahona crushed blanco.',
+  's-tq-eltequileno-repo': 'A bartender and enthusiast favorite, often praised as a high value, classic style reposado.',
+  's-tq-donjulio-1942': 'A fixture on best añejo lists and one of the most requested luxury tequilas in lounges.',
+  's-wh-lagavulin16': 'Near universally praised and frequently cited among the finest peated single malts in the world.',
+  's-wh-yamazaki12': 'Highly awarded and credited with helping put Japanese single malt on the global map.',
+  's-wh-macallan12': 'A long standing benchmark for sherried Speyside whisky and a frequent recommendation for new single malt drinkers.',
+  's-bb-weller-sr': 'Famous among bourbon hunters as the poor mans Pappy because it shares the wheated recipe family with Pappy Van Winkle.',
+  's-bb-blantons': 'Credited as the original single barrel bourbon and a consistent critical and collector favorite.'
+};
+
+/* ------- State ------- */
+const LS_KEY = 'ashoak_state_v2';
+let state = load();
+
+function seedCigars(){
+  return SEED_CIGARS.map(c => {
+    const merged = Object.assign(clone(c), CIGAR_DETAILS[c.id] ? clone(CIGAR_DETAILS[c.id]) : {});
+    if (EXPERT[c.id]) merged.expert = EXPERT[c.id];
+    return merged;
+  });
+}
+function seedSpirits(){
+  return SEED_SPIRITS.map(s => {
+    const merged = clone(s);
+    if (EXPERT[s.id]) merged.expert = EXPERT[s.id];
+    return merged;
+  });
+}
+function load(){
+  try{
+    const raw = localStorage.getItem(LS_KEY);
+    if (raw) return JSON.parse(raw);
+  }catch(e){}
+  const fresh = { cigars: seedCigars(), spirits: seedSpirits() };
+  localStorage.setItem(LS_KEY, JSON.stringify(fresh));
+  return fresh;
+}
+function clone(o){ return JSON.parse(JSON.stringify(o)); }
+function save(){ localStorage.setItem(LS_KEY, JSON.stringify(state)); }
+function allItems(){ return state.cigars.concat(state.spirits); }
+function findItem(id){ return allItems().find(x => x.id === id); }
+
+/* ------- Helpers ------- */
+function esc(s){ return (s||'').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+function smokedCount(it){ return (it.log||[]).length; }
+function lastSmoked(it){ const l = it.log||[]; return l.length ? l[l.length-1].date : null; }
+function avgRating(it){ const r=(it.log||[]).filter(x=>x.rating).map(x=>x.rating); return r.length ? (r.reduce((a,b)=>a+b,0)/r.length) : 0; }
+function stars(n){ const f=Math.round(n); return '★★★★★'.slice(0,f) + '☆☆☆☆☆'.slice(0,5-f); }
+function fmtDate(d){ try{ return new Date(d).toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'}); }catch(e){ return d; } }
+function locLabel(l){ return l==='home' ? 'Home humidor' : l==='lounge' ? 'Tap N Ash' : l==='catalog' ? 'Catalog' : l; }
+
+function toast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  clearTimeout(t._t); t._t = setTimeout(() => t.classList.remove('show'), 1700);
+}
+
+/* ------- Photo rendering ------- */
+async function setThumb(el, id){
+  const data = await Photos.get(id);
+  if (data){ el.style.backgroundImage = `url(${data})`; el.textContent = ''; }
+}
+function pickAndStorePhoto(id, cb){
+  const inp = document.createElement('input');
+  inp.type = 'file'; inp.accept = 'image/*'; inp.capture = 'environment';
+  inp.onchange = () => {
+    const file = inp.files[0]; if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      const img = new Image();
+      img.onload = async () => {
+        const max = 1000;
+        let { width:w, height:h } = img;
+        if (w > max || h > max){ const r = Math.min(max/w, max/h); w = Math.round(w*r); h = Math.round(h*r); }
+        const cv = document.createElement('canvas'); cv.width = w; cv.height = h;
+        cv.getContext('2d').drawImage(img, 0, 0, w, h);
+        const out = cv.toDataURL('image/jpeg', 0.82);
+        await Photos.set(id, out);
+        const it = findItem(id); if (it){ it.hasPhoto = true; save(); }
+        cb && cb(out);
+      };
+      img.src = reader.result;
+    };
+    reader.readAsDataURL(file);
+  };
+  inp.click();
+}
+
+/* ------- Router ------- */
+let currentTab = 'now';
+const view = document.getElementById('view');
+document.getElementById('nav').addEventListener('click', (e) => {
+  const b = e.target.closest('button[data-tab]'); if (!b) return;
+  go(b.dataset.tab);
+});
+function go(tab){
+  currentTab = tab;
+  document.querySelectorAll('#nav button').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+  const sub = document.getElementById('subline');
+  sub.textContent = ({
+    now:'What should I smoke right now?',
+    cigars:'Your cigar inventory',
+    spirits:'Your spirits and pairings',
+    add:'Add to your inventory',
+    stats:'Your sessions and stats'
+  })[tab] || 'Humidor, inventory, and pairing advisor';
+  ({ now:renderNow, cigars:renderCigars, spirits:renderSpirits, add:renderAdd, stats:renderStats }[tab])();
+  window.scrollTo(0,0);
+}
+
+/* ============================ NOW (advisor) ============================ */
+const ADV = { where:'home', mealId:'snack', bevCat:'coffee', bevStyle:'', bevId:'', length:'standard', bev:'coffee', foodD:null };
+const MEALS = [
+  { id:'none', label:'Nothing, fasting', weight:0, empty:true },
+  { id:'snack', label:'Light snack', weight:1 },
+  { id:'salad', label:'Salad or veggies', weight:1 },
+  { id:'fish', label:'Fish or seafood', weight:1, seafood:true },
+  { id:'sushi', label:'Sushi', weight:1, seafood:true },
+  { id:'chicken', label:'Chicken or poultry', weight:2 },
+  { id:'pasta', label:'Pasta or Italian', weight:2 },
+  { id:'pizza', label:'Pizza', weight:2 },
+  { id:'chinese', label:'Chinese or takeout', weight:2 },
+  { id:'burger', label:'Burger or sandwich', weight:2 },
+  { id:'mexican', label:'Mexican or tacos', weight:2 },
+  { id:'spicy', label:'Spicy food', weight:2, spicy:true },
+  { id:'bbq', label:'BBQ or ribs', weight:3 },
+  { id:'steak', label:'Steak or red meat', weight:3 },
+  { id:'dessert', label:'Dessert or sweets', weight:1, dessert:true }
+];
+const BEER_STYLES = [
+  { v:'dark', label:'Stout or Porter' },
+  { v:'amber', label:'Amber or Lager' },
+  { v:'hoppy', label:'IPA or Pale Ale' },
+  { v:'light', label:'Light lager or Pilsner' },
+  { v:'wheat', label:'Wheat or Belgian' }
+];
+const WINE_STYLES = [
+  { v:'bold-red', label:'Bold red (Cabernet, Malbec)' },
+  { v:'light-red', label:'Light red (Pinot Noir)' },
+  { v:'white', label:'White (Chardonnay, Sauv Blanc)' },
+  { v:'sparkling', label:'Champagne or Sparkling' },
+  { v:'port', label:'Port or Dessert wine' }
+];
+function renderNow(){
+  view.innerHTML = `
+    <div class="card">
+      <label class="fld">Where are you?</label>
+      <div class="seg" data-grp="where">
+        ${seg('where','home','Home humidor')}${seg('where','lounge','Tap N Ash')}
+      </div>
+      <label class="fld">What did you just eat?</label>
+      <select id="mealsel">
+        ${MEALS.map(m => `<option value="${m.id}" ${ADV.mealId===m.id?'selected':''}>${esc(m.label)}</option>`).join('')}
+      </select>
+      <label class="fld">What are you drinking?</label>
+      <div class="seg" data-grp="bevCat">
+        ${seg('bevCat','coffee','Coffee')}${seg('bevCat','tequila','Tequila')}${seg('bevCat','bourbon','Bourbon')}${seg('bevCat','whisky','Whisky')}${seg('bevCat','rum','Rum')}${seg('bevCat','beer','Beer')}${seg('bevCat','wine','Wine')}${seg('bevCat','none','Nothing')}
+      </div>
+      <div id="bottlewrap"></div>
+      <label class="fld">Session</label>
+      <div class="seg" data-grp="length">
+        ${seg('length','working','Working / laptop')}${seg('length','standard','Standard')}${seg('length','special','Long / special')}
+      </div>
+      <div style="margin-top:16px;"><button class="btn gold" id="advise">Recommend a cigar</button></div>
+      <div id="result"></div>
+    </div>
+    <p class="hint">Picks come only from your confirmed inventory at the chosen location. The app never invents cigars you do not own. Cigars without logged tasting notes are flagged, not guessed.</p>
+  `;
+  view.querySelectorAll('.seg').forEach(grp => {
+    grp.addEventListener('click', (e) => {
+      const b = e.target.closest('button'); if (!b) return;
+      const g = grp.dataset.grp;
+      ADV[g] = b.dataset.val;
+      grp.querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b));
+      if (g === 'bevCat'){ ADV.bevId = ''; ADV.bevStyle = ''; drawBottlePicker(); }
+    });
+  });
+  document.getElementById('mealsel').addEventListener('change', (e) => { ADV.mealId = e.target.value; });
+  drawBottlePicker();
+  document.getElementById('advise').addEventListener('click', runAdvisor);
+}
+function seg(grp, val, label){
+  const on = ADV[grp] === val ? ' on' : '';
+  return `<button class="${on.trim()}" data-val="${val}">${label}</button>`;
+}
+const BEV_CAT_LABEL = { tequila:'Tequila', bourbon:'Bourbon', whisky:'Whisky', rum:'Rum' };
+function drawBottlePicker(){
+  const wrap = document.getElementById('bottlewrap'); if (!wrap) return;
+  // Beer and wine: pick a style, no catalog bottles.
+  if (ADV.bevCat === 'beer' || ADV.bevCat === 'wine'){
+    const styles = ADV.bevCat === 'beer' ? BEER_STYLES : WINE_STYLES;
+    if (!ADV.bevStyle) ADV.bevStyle = styles[0].v;
+    wrap.innerHTML = `
+      <label class="fld">What style?</label>
+      <select id="stylesel">
+        ${styles.map(s => `<option value="${s.v}" ${ADV.bevStyle===s.v?'selected':''}>${esc(s.label)}</option>`).join('')}
+      </select>`;
+    const ss = wrap.querySelector('#stylesel');
+    ss.addEventListener('change', () => { ADV.bevStyle = ss.value; });
+    return;
+  }
+  const cat = BEV_CAT_LABEL[ADV.bevCat];
+  if (!cat){ wrap.innerHTML = ''; return; }
+  const bottles = state.spirits.filter(s => s.category === cat);
+  wrap.innerHTML = `
+    <label class="fld">Brand and edition (optional)</label>
+    <select id="bevsel">
+      <option value="">Not sure, generic ${esc(cat)}</option>
+      ${bottles.map(b => `<option value="${b.id}" ${ADV.bevId===b.id?'selected':''}>${esc(b.name)} · ${esc(b.style)}</option>`).join('')}
+    </select>
+    <div id="bevinfo" class="hint"></div>
+  `;
+  const sel = wrap.querySelector('#bevsel');
+  sel.addEventListener('change', () => { ADV.bevId = sel.value; showBevInfo(); });
+  showBevInfo();
+}
+function showBevInfo(){
+  const info = document.getElementById('bevinfo'); if (!info) return;
+  const b = ADV.bevId ? findItem(ADV.bevId) : null;
+  if (!b){ info.innerHTML = ''; return; }
+  info.innerHTML = `${esc(b.flavor||'')} <a href="#" id="bevmore">View full details</a>`;
+  const a = info.querySelector('#bevmore');
+  if (a) a.addEventListener('click', (e) => { e.preventDefault(); openDetail(b.id); });
+}
+function deriveBev(){
+  const cat = ADV.bevCat;
+  if (cat === 'none') return 'none';
+  if (cat === 'coffee') return 'coffee';
+  if (cat === 'tequila') return 'tequila';
+  if (cat === 'whisky') return 'nikka';
+  if (cat === 'bourbon') return 'bourbon';
+  if (cat === 'rum'){
+    const b = ADV.bevId ? findItem(ADV.bevId) : null;
+    return (b && b.style === 'Aged Rum') ? 'bourbon' : 'agricole';
+  }
+  if (cat === 'beer'){
+    if (ADV.bevStyle === 'dark') return 'beer-dark';
+    if (ADV.bevStyle === 'hoppy') return 'beer-hoppy';
+    return 'beer-light';
+  }
+  if (cat === 'wine'){
+    if (ADV.bevStyle === 'bold-red') return 'wine-bold';
+    if (ADV.bevStyle === 'port') return 'wine-sweet';
+    if (ADV.bevStyle === 'sparkling') return 'wine-sparkling';
+    return 'wine-light';
+  }
+  return 'none';
+}
+function deriveFood(){
+  const m = MEALS.find(x => x.id === ADV.mealId) || MEALS[1];
+  return { w:m.weight, empty:!!m.empty, dessert:!!m.dessert, seafood:!!m.seafood, spicy:!!m.spicy, label:m.label };
+}
+
+function scoreCigar(it){
+  let s = 0; const w = it.wrapperType; const b = it.body;
+  const dark = (w==='maduro'||w==='oscuro'||w==='san-andres'||w==='broadleaf');
+  // Beverage
+  if (ADV.bev === 'coffee'){ if (w==='ct-shade') s+=4; if (w==='natural') s+=3; if (b<=3) s+=2; if (b>=5) s-=4; if (it.dailyDriver) s+=2; }
+  if (ADV.bev === 'nikka'){ if (w==='san-andres') s+=5; if (w==='ct-shade') s+=4; if (w==='broadleaf'||w==='maduro') s+=2; }
+  if (ADV.bev === 'bourbon'){ if (w==='san-andres'||w==='broadleaf'||w==='maduro') s+=4; if (b>=4) s+=2; if (w==='ct-shade') s-=2; }
+  if (ADV.bev === 'tequila'){ if (w==='ct-shade') s+=5; if (b<=2) s+=2; if (b>=4) s-=3; }
+  if (ADV.bev === 'agricole'){ if (b<=3) s+=3; if (w==='ct-shade'||w==='natural'||w==='habano') s+=2; if (b>=4) s-=3; if (w==='oscuro'||w==='infused') s-=4; }
+  if (ADV.bev === 'beer-dark'){ if (dark) s+=3; if (b>=4) s+=2; }
+  if (ADV.bev === 'beer-hoppy'){ if (b===3||b===4) s+=2; if (w==='habano'||w==='natural') s+=1; }
+  if (ADV.bev === 'beer-light'){ if (w==='ct-shade'||w==='natural') s+=2; if (b<=3) s+=2; if (b>=5) s-=3; }
+  if (ADV.bev === 'wine-bold'){ if (b>=4) s+=3; if (w==='maduro'||w==='oscuro'||w==='broadleaf') s+=2; }
+  if (ADV.bev === 'wine-light'){ if (b<=3) s+=2; if (w==='ct-shade'||w==='natural'||w==='habano') s+=1; if (b>=5) s-=3; }
+  if (ADV.bev === 'wine-sweet'){ if (w==='maduro'||w==='san-andres'||w==='broadleaf') s+=3; if (w==='natural') s+=1; }
+  if (ADV.bev === 'wine-sparkling'){ if (w==='ct-shade') s+=4; if (b<=2) s+=2; if (b>=4) s-=3; }
+  // Food
+  const f = ADV.foodD || deriveFood();
+  if (f.empty){ if (it.emptyOk) s+=6; if (b>=4 && dark) s-=5; if (b<=2) s+=2; }
+  else if (f.dessert){ if (w==='natural'||w==='habano'||w==='ct-shade') s+=3; if (w==='maduro'||w==='oscuro') s-=2; }
+  else if (f.w>=3){ if (b>=4) s+=4; if (b<=2) s-=4; }
+  else if (f.w===2){ if (b===3||b===4) s+=2; if (b<=1) s-=2; if (b>=5) s-=1; }
+  else { if (w==='ct-shade') s+=3; if (b<=3) s+=2; if (b>=4) s-=3; }
+  if (f.seafood){ if (w==='ct-shade'||w==='natural') s+=2; if (b>=4) s-=2; }
+  if (f.spicy){ if ((w==='maduro'||w==='habano'||w==='san-andres') && (b===3||b===4)) s+=2; if (b>=5) s-=1; }
+  // Session
+  if (ADV.length === 'working'){ if (it.dailyDriver) s+=3; if (b<=3) s+=1; if (it.special) s-=5; if (it.needsLog) s-=3; }
+  if (ADV.length === 'special'){ if (it.special) s+=4; if (it.category==='Premium'||it.category==='Cuban') s+=2; }
+  if (ADV.length === 'standard'){ if (it.dailyDriver) s+=1; }
+  // General nudge: prefer something in stock
+  if (it.qty >= 3) s += 0.5;
+  return s;
+}
+
+function runAdvisor(){
+  ADV.bev = deriveBev();
+  ADV.foodD = deriveFood();
+  const pool = state.cigars.filter(c => c.location === ADV.where);
+  const res = document.getElementById('result');
+  if (!pool.length){
+    res.innerHTML = `<div class="empty">No cigars logged at ${locLabel(ADV.where)} yet. Add some on the Add tab.</div>`;
+    return;
+  }
+  const scored = pool.map(c => ({ c, s: scoreCigar(c) })).sort((a,b) => b.s - a.s);
+
+  // Safe pick: highest score among items that have established notes (not needing log).
+  const safeList = scored.filter(x => !x.c.needsLog);
+  const safe = (safeList[0] || scored[0]).c;
+
+  // Interesting pick: a different cigar that is special, boutique, exotic, or flagged for logging,
+  // with a reasonable score. Falls back to the next best distinct cigar.
+  let interesting = null;
+  const intrCandidates = scored.filter(x =>
+    x.c.id !== safe.id && (x.c.special || x.c.needsLog || x.c.category==='Cuban' || x.c.category==='Lounge' || x.c.category==='Premium')
+  );
+  // Only consider candidates that are not badly mismatched.
+  const okIntr = intrCandidates.filter(x => x.s >= (scored[0].s - 6));
+  interesting = (okIntr[0] || intrCandidates[0] || scored.find(x => x.c.id !== safe.id)).c;
+
+  res.innerHTML = `
+    ${pickCard('safe', 'Safe pick', safe)}
+    ${interesting ? pickCard('intr', 'Interesting pick', interesting) : ''}
+    <div class="timing">${timingNotes()}</div>
+  `;
+  res.querySelectorAll('[data-open]').forEach(el => el.addEventListener('click', () => openDetail(el.dataset.open)));
+}
+
+function pickCard(cls, kicker, it){
+  const why = it.needsLog
+    ? 'No personal tasting notes yet. ' + esc(it.pairing)
+    : esc(it.flavor || it.pairing);
+  const flags = [];
+  if (it.needsLog) flags.push('Flag for logging');
+  if (it.special) flags.push('Special occasion');
+  const sc = smokedCount(it);
+  const seen = sc ? `You have smoked this ${sc} time${sc>1?'s':''}. Last on ${fmtDate(lastSmoked(it))}.` : 'You have not logged this one yet.';
+  return `
+    <div class="pick ${cls}" data-open="${it.id}">
+      <div class="kicker">${kicker}</div>
+      <div class="nm">${esc(it.name)}</div>
+      <div class="loc">${esc(it.bodyLabel)} · ${esc(it.wrapper)} · ${locLabel(it.location)} · ${it.qty} on hand</div>
+      <div class="why">${why}</div>
+      <div class="loc">${seen}${flags.length ? ' · ' + flags.join(' · ') : ''}</div>
+    </div>`;
+}
+
+function timingNotes(){
+  const out = [];
+  const f = deriveFood();
+  const bev = deriveBev();
+  const bottle = ADV.bevId ? findItem(ADV.bevId) : null;
+  out.push(`Just had: <b>${esc(f.label)}</b>.`);
+  if (bottle) out.push(`Drinking <b>${esc(bottle.name)}</b>. ${esc(bottle.pairing||'')}`);
+  else if (ADV.bevCat === 'beer' || ADV.bevCat === 'wine'){
+    const styles = ADV.bevCat === 'beer' ? BEER_STYLES : WINE_STYLES;
+    const st = styles.find(x => x.v === ADV.bevStyle);
+    if (st) out.push(`Drinking <b>${esc(st.label)}</b>.`);
+  }
+  if (f.w >= 3) out.push('Wait <b>30 to 45 minutes</b> after a heavy meal before lighting.');
+  if (f.empty) out.push('Empty stomach: stay mild to medium and avoid full maduros until you have eaten.');
+  if (f.dessert) out.push('Sip <b>water</b> between sweet food and the cigar to clear residual sugar from the palate.');
+  if (f.seafood) out.push('After seafood, keep the cigar mild to medium so it does not flatten the lighter palate.');
+  if (f.spicy) out.push('After spicy food, a little natural sweetness in the wrapper balances the heat.');
+  if (ADV.bevCat === 'whisky') out.push('Single malt: serve <b>neat, no ice</b>. Add a small water drop at the <b>halfway point of the cigar</b>.');
+  if (ADV.bevCat === 'whisky' || ADV.bevCat === 'bourbon'){
+    out.push('Whisky pacing: small pour, <b>1 to 1.5 oz</b>, sip every 8 to 12 minutes or every 3 to 4 draws, always between draws. Do not refill mid cigar if the pour finishes first.');
+  }
+  if (bev === 'agricole') out.push('Agricole rum is delicate. Let the cigar complement it, do not overwhelm the grassy vanilla character.');
+  if (bev === 'wine-sweet') out.push('Port and dessert wine pair with maduro sweetness. Avoid a dry, peppery cigar that fights the wine.');
+  if (bev === 'wine-sparkling') out.push('Champagne wants a light, creamy cigar. Anything full will bury the bubbles.');
+  if (bev === 'beer-dark') out.push('A stout or porter loves a maduro. The roast and the sweetness meet in the middle.');
+  if (ADV.length === 'special') out.push('Two cigar session: go lighter to fuller, and reset the palate between sticks.');
+  if (ADV.length === 'working') out.push('Working session: keep it low maintenance. Save the focused sticks for when you can pay attention.');
+  return out.map(x => '• ' + x).join('<br>');
+}
+
+/* ============================ CIGARS ============================ */
+let cigarFilter = 'all';
+let cigarSearch = '';
+function renderCigars(){
+  view.innerHTML = `
+    <div class="search"><input id="csearch" placeholder="Search cigars by name or brand" value="${esc(cigarSearch)}"></div>
+    <button class="btn gold sm" id="cadd" style="width:100%; margin:2px 0 2px;">📷 Add a cigar to my stash with a photo</button>
+    <div class="filters" id="cfilters">
+      ${cfilter('all','All')}${cfilter('home','Home')}${cfilter('lounge','Lounge')}${cfilter('Premium','Premium')}${cfilter('Cuban','Cuban')}${cfilter('Nicaraguan','Nica/Hon')}${cfilter('Everyday','Everyday')}${cfilter('new','Not smoked')}${cfilter('flag','To log')}
+    </div>
+    <div class="card" id="clist"></div>
+  `;
+  document.getElementById('cadd').addEventListener('click', () => go('add'));
+  document.getElementById('csearch').addEventListener('input', (e) => { cigarSearch = e.target.value; drawCigarList(); });
+  document.getElementById('cfilters').addEventListener('click', (e) => {
+    const b = e.target.closest('button'); if (!b) return;
+    cigarFilter = b.dataset.f; drawCigarList();
+    document.querySelectorAll('#cfilters button').forEach(x => x.classList.toggle('on', x === b));
+  });
+  drawCigarList();
+}
+function cfilter(f, label){ return `<button data-f="${f}" class="${cigarFilter===f?'on':''}">${label}</button>`; }
+function drawCigarList(){
+  let list = state.cigars.slice();
+  const q = cigarSearch.trim().toLowerCase();
+  if (q) list = list.filter(c => (c.name+' '+c.brand+' '+c.wrapper).toLowerCase().includes(q));
+  if (cigarFilter==='home'||cigarFilter==='lounge') list = list.filter(c => c.location===cigarFilter);
+  else if (['Premium','Cuban','Nicaraguan','Everyday'].includes(cigarFilter)) list = list.filter(c => c.category===cigarFilter);
+  else if (cigarFilter==='new') list = list.filter(c => smokedCount(c)===0);
+  else if (cigarFilter==='flag') list = list.filter(c => c.needsLog);
+  list.sort((a,b)=> a.name.localeCompare(b.name));
+  const el = document.getElementById('clist');
+  if (!list.length){ el.innerHTML = `<div class="empty">No cigars match. Try a different filter.</div>`; return; }
+  el.innerHTML = list.map(itemRow).join('');
+  hydrateRows(el);
+}
+
+/* ============================ SPIRITS (guided browser) ============================ */
+let spiritSearch = '';
+const spiritNav = { category:null, style:null };
+const SPIRIT_CAT_ICON = { Tequila:'🌵', Bourbon:'🥃', Whisky:'🥃', Rum:'🍹', Other:'☕' };
+
+function renderSpirits(){
+  view.innerHTML = `
+    <div class="search"><input id="ssearch" placeholder="Search every spirit by name, brand, or style" value="${esc(spiritSearch)}"></div>
+    <div id="sbody"></div>
+  `;
+  document.getElementById('ssearch').addEventListener('input', (e) => { spiritSearch = e.target.value; drawSpirits(); });
+  drawSpirits();
+}
+
+function drawSpirits(){
+  const body = document.getElementById('sbody');
+  const q = spiritSearch.trim().toLowerCase();
+
+  // Search overrides the drill-down and lists matches across the whole catalog.
+  if (q){
+    const matches = state.spirits.filter(s => (s.name+' '+s.category+' '+s.style+' '+s.producer).toLowerCase().includes(q));
+    body.innerHTML = `<div class="card">${matches.length ? matches.map(itemRow).join('') : `<div class="empty">No spirits match.</div>`}</div>`;
+    hydrateRows(body.querySelector('.card'));
+    return;
+  }
+
+  // Level 3: bottles within a chosen style.
+  if (spiritNav.category && spiritNav.style){
+    const bottles = state.spirits.filter(s => s.category===spiritNav.category && s.style===spiritNav.style).sort((a,b)=>a.name.localeCompare(b.name));
+    body.innerHTML = `
+      ${crumb(spiritNav.category + ' · ' + spiritNav.style)}
+      <div class="card">${bottles.map(itemRow).join('')}</div>
+    `;
+    wireCrumb(); hydrateRows(body.querySelector('.card'));
+    return;
+  }
+
+  // Level 2: styles within a chosen category.
+  if (spiritNav.category){
+    const inCat = state.spirits.filter(s => s.category===spiritNav.category);
+    const styles = [...new Set(inCat.map(s => s.style))];
+    body.innerHTML = `
+      ${crumb(spiritNav.category)}
+      <div class="card">
+        ${styles.map(st => {
+          const n = inCat.filter(s => s.style===st).length;
+          return `<button class="comprow" data-style="${esc(st)}">
+            <span>${esc(st)}</span><span class="cnt">${n}</span></button>`;
+        }).join('')}
+      </div>
+    `;
+    wireCrumb();
+    body.querySelectorAll('[data-style]').forEach(b => b.addEventListener('click', () => { spiritNav.style = b.dataset.style; drawSpirits(); window.scrollTo(0,0); }));
+    return;
+  }
+
+  // Level 1: categories, plus an On the bar shortcut.
+  const cats = [...new Set(state.spirits.map(s => s.category).filter(Boolean))];
+  const owned = state.spirits.filter(s => s.owned);
+  body.innerHTML = `
+    ${owned.length ? `<h2 class="sec">On the Tap N Ash bar</h2><div class="card">${owned.map(itemRow).join('')}</div>` : ''}
+    <h2 class="sec">Browse by spirit</h2>
+    <div class="card">
+      ${cats.map(c => {
+        const n = state.spirits.filter(s => s.category===c).length;
+        return `<button class="comprow" data-cat="${esc(c)}">
+          <span>${SPIRIT_CAT_ICON[c]||'🥃'} ${esc(c)}</span><span class="cnt">${n}</span></button>`;
+      }).join('')}
+    </div>
+    <p class="hint">Pick a spirit, then a style, then the exact bottle for the full profile: maker, distillery, history, flavor, cost, and what the experts say. Add your own with the Add tab.</p>
+  `;
+  body.querySelectorAll('.card').forEach(hydrateRows);
+  body.querySelectorAll('[data-cat]').forEach(b => b.addEventListener('click', () => { spiritNav.category = b.dataset.cat; spiritNav.style = null; drawSpirits(); window.scrollTo(0,0); }));
+}
+function crumb(text){
+  return `<div class="crumbs"><button class="crumb-back" id="crumbback">← Back</button><span class="crumb-here">${esc(text)}</span></div>`;
+}
+function wireCrumb(){
+  const b = document.getElementById('crumbback'); if (!b) return;
+  b.addEventListener('click', () => {
+    if (spiritNav.style) spiritNav.style = null;
+    else spiritNav.category = null;
+    drawSpirits(); window.scrollTo(0,0);
+  });
+}
+
+/* ------- Shared row rendering ------- */
+function itemRow(it){
+  const isCigar = it.kind === 'cigar';
+  const sc = smokedCount(it);
+  const badges = [];
+  if (isCigar){
+    badges.push(`<span class="badge body">${esc(it.bodyLabel)}</span>`);
+    if (it.needsLog) badges.push(`<span class="badge flag">To log</span>`);
+    else if (sc>0) badges.push(`<span class="badge smoked">Smoked ${sc}×</span>`);
+    else badges.push(`<span class="badge new">New</span>`);
+  } else {
+    if (it.style) badges.push(`<span class="badge">${esc(it.style)}</span>`);
+    if (it.owned) badges.push(`<span class="badge smoked">On the bar</span>`);
+    if (it.expert) badges.push(`<span class="badge new">Critic notes</span>`);
+  }
+  const sub = isCigar
+    ? `${esc(it.brand)} · ${esc(it.wrapper)} · ${it.qty} on hand`
+    : `${esc(it.producer||it.category)}${it.price?' · '+esc(it.price):''}`;
+  const icon = isCigar ? '🚬' : (SPIRIT_CAT_ICON[it.category] || '🥃');
+  return `
+    <div class="item" data-open="${it.id}">
+      <div class="thumb" data-photo="${it.id}">${icon}</div>
+      <div class="info">
+        <div class="nm">${esc(it.name)}</div>
+        <div class="sub">${sub}</div>
+        <div class="badges">${badges.join('')}</div>
+      </div>
+    </div>`;
+}
+function hydrateRows(container){
+  container.querySelectorAll('[data-open]').forEach(el => el.addEventListener('click', () => openDetail(el.dataset.open)));
+  container.querySelectorAll('.thumb[data-photo]').forEach(el => {
+    const it = findItem(el.dataset.photo);
+    if (it && it.hasPhoto) setThumb(el, it.id);
+  });
+}
+
+/* ============================ DETAIL SHEET ============================ */
+function openDetail(id){
+  const it = findItem(id); if (!it) return;
+  const isCigar = it.kind === 'cigar';
+  const sc = smokedCount(it);
+  const seen = isCigar ? (sc
+    ? `<div class="note"><b>You have smoked this ${sc} time${sc>1?'s':''}.</b> Last on ${fmtDate(lastSmoked(it))}.${avgRating(it)?` Your average rating ${stars(avgRating(it))}.`:''}</div>`
+    : `<div class="note muted">You have not smoked this one yet. It is new to your log.</div>`) : '';
+
+  const drow = (k, v) => v ? `<div class="drow"><span class="k">${k}</span><span class="v">${esc(v)}</span></div>` : '';
+
+  const profile = (isCigar && it.needsLog)
+    ? `<div class="note muted">No personal tasting notes logged yet. ${esc(it.pairing)}</div>`
+    : `${it.flavor?`<div class="note"><b>Flavor.</b> ${esc(it.flavor)}</div>`:''}${it.pairing?`<div class="note"><b>Pairing.</b> ${esc(it.pairing)}</div>`:''}`;
+
+  const rows = isCigar ? `
+    ${drow('Brand', it.brand)}
+    ${drow('Maker', it.manufacturer)}
+    ${drow('Factory', it.factory)}
+    ${drow('Origin', it.country || it.origin)}
+    ${drow('Founded', it.founded)}
+    ${drow('Wrapper', it.wrapper)}
+    ${drow('Body', it.bodyLabel)}
+    ${drow('Category', it.category)}
+    ${drow('Approx cost', it.price)}
+    ${drow('Location', locLabel(it.location))}
+    <div class="drow"><span class="k">On hand</span><span class="v" id="qtyv">${it.qty}</span></div>
+  ` : `
+    ${drow('Category', it.category)}
+    ${drow('Style', it.style)}
+    ${drow('Producer', it.producer)}
+    ${drow('Distillery', it.distillery)}
+    ${drow('Region', it.region)}
+    ${drow('Country', it.country)}
+    ${drow('ABV', it.abv)}
+    ${drow('Age', it.age)}
+    ${drow('Approx cost', it.price)}
+    ${it.owned?`<div class="drow"><span class="k">Location</span><span class="v">${locLabel(it.location)}</span></div>`:''}
+  `;
+
+  const historyHtml = it.history
+    ? `<h2 class="sec" style="margin-top:18px;">History</h2><div class="note">${esc(it.history)}</div>` : '';
+
+  const expertHtml = `
+    <h2 class="sec" style="margin-top:18px;">What the experts say</h2>
+    ${it.expert ? `<div class="expertbox"><b>Critic consensus.</b> ${esc(it.expert)}</div>`
+                : `<div class="note muted">No critic notes saved for this one yet.</div>`}
+    <button class="btn sm ghost" id="expertsearch" style="margin-top:10px;">🔎 Search expert reviews online</button>`;
+
+  const logHtml = (it.log||[]).slice().reverse().map(l => `
+    <div class="logentry"><span class="d">${fmtDate(l.date)}${l.notes?' · '+esc(l.notes):''}</span><span class="stars">${l.rating?stars(l.rating):''}</span></div>
+  `).join('') || `<div class="note muted">No sessions logged.</div>`;
+
+  const sheet = document.createElement('div');
+  sheet.className = 'sheet';
+  sheet.innerHTML = `
+    <div class="panel">
+      <div class="grab"></div>
+      <div class="dphoto" id="dphoto">${isCigar?'🚬':(SPIRIT_CAT_ICON[it.category]||'🥃')}</div>
+      <div class="row2">
+        <button class="btn sm" id="takephoto">📷 ${it.hasPhoto?'Replace photo':'Add photo'}</button>
+        ${isCigar?`<button class="btn sm gold" id="logsmoke">🔥 Log a smoke</button>`:`<button class="btn sm gold" id="logsip">🥃 Log a pour</button>`}
+      </div>
+      <h2 style="margin:14px 2px 2px; font-size:20px; color:var(--gold2);">${esc(it.name)}</h2>
+      ${seen}
+      ${profile}
+      <div style="margin-top:14px;">${rows}</div>
+      ${isCigar?`
+        <div class="row2">
+          <button class="btn sm ghost" id="qminus">− Smoke / remove one</button>
+          <button class="btn sm ghost" id="qplus">＋ Add one</button>
+        </div>`:''}
+      ${historyHtml}
+      ${expertHtml}
+      ${isCigar?`
+        <h2 class="sec" style="margin-top:18px;">Your session log</h2>
+        <div id="loglist">${logHtml}</div>
+      `:`
+        <h2 class="sec" style="margin-top:18px;">Your pour log</h2>
+        <div id="loglist">${logHtml}</div>
+      `}
+      <div class="row2" style="margin-top:18px;">
+        <button class="btn sm ghost" id="edit">✎ Edit details</button>
+        <button class="btn sm ghost danger" id="del">Delete</button>
+      </div>
+      <button class="btn" id="close" style="margin-top:10px;">Close</button>
+    </div>`;
+  document.body.appendChild(sheet);
+  const close = () => sheet.remove();
+  sheet.addEventListener('click', (e) => { if (e.target === sheet) close(); });
+  sheet.querySelector('#close').addEventListener('click', close);
+
+  const photoEl = sheet.querySelector('#dphoto');
+  if (it.hasPhoto) Photos.get(it.id).then(d => { if (d){ photoEl.style.backgroundImage = `url(${d})`; photoEl.style.backgroundSize='cover'; photoEl.style.backgroundPosition='center'; photoEl.textContent=''; } });
+
+  sheet.querySelector('#takephoto').addEventListener('click', () => {
+    pickAndStorePhoto(it.id, (data) => {
+      photoEl.style.backgroundImage = `url(${data})`; photoEl.style.backgroundSize='cover'; photoEl.style.backgroundPosition='center'; photoEl.textContent='';
+      toast('Photo saved');
+    });
+  });
+
+  if (isCigar){
+    sheet.querySelector('#logsmoke').addEventListener('click', () => { close(); openLogSmoke(it.id); });
+    sheet.querySelector('#qplus').addEventListener('click', () => { it.qty++; save(); sheet.querySelector('#qtyv').textContent = it.qty; });
+    sheet.querySelector('#qminus').addEventListener('click', () => { if (it.qty>0) it.qty--; save(); sheet.querySelector('#qtyv').textContent = it.qty; toast('Removed one'); });
+  } else {
+    sheet.querySelector('#logsip').addEventListener('click', () => { close(); openLogSmoke(it.id); });
+  }
+  sheet.querySelector('#expertsearch').addEventListener('click', () => {
+    const q = isCigar ? `${it.name} cigar review rating` : `${it.name} ${it.category} review`;
+    window.open('https://www.google.com/search?q=' + encodeURIComponent(q), '_blank');
+  });
+  sheet.querySelector('#edit').addEventListener('click', () => { close(); openEdit(it.id); });
+  sheet.querySelector('#del').addEventListener('click', () => {
+    if (!confirm(`Delete ${it.name} from inventory? This cannot be undone.`)) return;
+    if (it.kind==='cigar') state.cigars = state.cigars.filter(x => x.id !== it.id);
+    else state.spirits = state.spirits.filter(x => x.id !== it.id);
+    Photos.del(it.id); save(); close(); go(currentTab); toast('Deleted');
+  });
+}
+
+/* ------- Edit details ------- */
+function openEdit(id){
+  const it = findItem(id); if (!it) return;
+  const isCigar = it.kind === 'cigar';
+  const fields = isCigar
+    ? [['brand','Brand'],['manufacturer','Maker'],['factory','Factory'],['country','Origin country'],['founded','Founded'],['wrapper','Wrapper'],['price','Approx cost'],['flavor','Flavor notes','area'],['pairing','Pairing notes','area'],['history','History','area'],['expert','What the experts say','area']]
+    : [['producer','Producer'],['distillery','Distillery'],['region','Region'],['country','Country'],['abv','ABV'],['age','Age'],['price','Approx cost'],['flavor','Flavor notes','area'],['pairing','Pairing notes','area'],['history','History','area'],['expert','What the experts say','area']];
+  const sheet = document.createElement('div');
+  sheet.className = 'sheet';
+  sheet.innerHTML = `
+    <div class="panel">
+      <div class="grab"></div>
+      <h2 style="margin:2px 2px 6px; font-size:19px; color:var(--gold2);">Edit ${esc(it.name)}</h2>
+      ${fields.map(([k,label,t]) => `
+        <label class="fld">${label}</label>
+        ${t==='area' ? `<textarea data-k="${k}">${esc(it[k]||'')}</textarea>` : `<input data-k="${k}" value="${esc(it[k]||'')}">`}
+      `).join('')}
+      <div class="row2" style="margin-top:16px;">
+        <button class="btn ghost" id="ecancel">Cancel</button>
+        <button class="btn gold" id="esave">Save details</button>
+      </div>
+    </div>`;
+  document.body.appendChild(sheet);
+  const close = () => sheet.remove();
+  sheet.addEventListener('click', (e) => { if (e.target === sheet) close(); });
+  sheet.querySelector('#ecancel').addEventListener('click', () => { close(); openDetail(id); });
+  sheet.querySelector('#esave').addEventListener('click', () => {
+    sheet.querySelectorAll('[data-k]').forEach(el => { it[el.dataset.k] = el.value.trim(); });
+    if (isCigar && it.needsLog && it.flavor) it.needsLog = false;
+    save(); close(); toast('Details saved'); openDetail(id);
+  });
+}
+
+/* ------- Log a smoke or pour ------- */
+function openLogSmoke(id){
+  const it = findItem(id); if (!it) return;
+  const isCigar = it.kind === 'cigar';
+  let rating = 0;
+  const sheet = document.createElement('div');
+  sheet.className = 'sheet';
+  sheet.innerHTML = `
+    <div class="panel">
+      <div class="grab"></div>
+      <h2 style="margin:2px 2px 4px; font-size:19px; color:var(--gold2);">${isCigar?'Log a smoke':'Log a pour'}</h2>
+      <div class="note muted">${esc(it.name)} · ${fmtDate(new Date())}</div>
+      <label class="fld">How was it?</label>
+      <div class="seg" id="rate">
+        ${[1,2,3,4,5].map(n=>`<button data-r="${n}">${'★'.repeat(n)}</button>`).join('')}
+      </div>
+      <label class="fld">Notes (optional)</label>
+      <textarea id="lnotes" placeholder="${isCigar?'Flavors, burn, pairing, how it smoked...':'Flavors, what you paired it with, how you served it...'}"></textarea>
+      ${isCigar?`
+      <label class="fld">Remove one from your count?</label>
+      <div class="seg" id="dec">
+        <button class="on" data-d="1">Yes, I smoked one</button><button data-d="0">No, just logging</button>
+      </div>`:''}
+      <div class="row2" style="margin-top:16px;">
+        <button class="btn ghost" id="cancel">Cancel</button>
+        <button class="btn gold" id="savelog">Save ${isCigar?'session':'pour'}</button>
+      </div>
+    </div>`;
+  document.body.appendChild(sheet);
+  const close = () => sheet.remove();
+  sheet.addEventListener('click', (e) => { if (e.target === sheet) close(); });
+  sheet.querySelector('#cancel').addEventListener('click', close);
+  let dec = isCigar ? 1 : 0;
+  sheet.querySelector('#rate').addEventListener('click', (e) => {
+    const b = e.target.closest('button'); if (!b) return; rating = +b.dataset.r;
+    sheet.querySelectorAll('#rate button').forEach(x => x.classList.toggle('on', +x.dataset.r <= rating));
+  });
+  const decEl = sheet.querySelector('#dec');
+  if (decEl) decEl.addEventListener('click', (e) => {
+    const b = e.target.closest('button'); if (!b) return; dec = +b.dataset.d;
+    decEl.querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b));
+  });
+  sheet.querySelector('#savelog').addEventListener('click', () => {
+    it.log = it.log || [];
+    it.log.push({ date: new Date().toISOString(), rating, notes: sheet.querySelector('#lnotes').value.trim() });
+    if (it.needsLog) it.needsLog = false; // once logged it has personal notes
+    if (dec && it.qty > 0) it.qty--;
+    save(); close(); toast(isCigar?'Session logged':'Pour logged'); go(currentTab);
+  });
+}
+
+/* ============================ ADD ============================ */
+function renderAdd(){
+  view.innerHTML = `
+    <div class="card">
+      <label class="fld">What are you adding?</label>
+      <div class="seg" id="kind">
+        <button class="on" data-k="cigar">🚬 Cigar</button><button data-k="spirit">🥃 Spirit</button>
+      </div>
+      <div id="addform"></div>
+    </div>
+  `;
+  let kind = 'cigar';
+  drawAddForm(kind);
+  document.getElementById('kind').addEventListener('click', (e) => {
+    const b = e.target.closest('button'); if (!b) return; kind = b.dataset.k;
+    document.querySelectorAll('#kind button').forEach(x => x.classList.toggle('on', x === b));
+    drawAddForm(kind);
+  });
+}
+function drawAddForm(kind){
+  const f = document.getElementById('addform');
+  if (kind === 'cigar'){
+    f.innerHTML = `
+      <label class="fld">Name</label><input id="f-name" placeholder="e.g. Padron 1964">
+      <label class="fld">Brand</label><input id="f-brand" placeholder="e.g. Padron">
+      <label class="fld">Wrapper</label><input id="f-wrapper" placeholder="e.g. Natural, Maduro, Connecticut">
+      <label class="fld">Body</label>
+      <select id="f-body">
+        <option value="2">Mild-Medium</option><option value="3" selected>Medium</option>
+        <option value="4">Medium-Full</option><option value="5">Full</option><option value="1">Mild</option>
+      </select>
+      <label class="fld">Wrapper type (for pairing logic)</label>
+      <select id="f-wt">
+        <option value="ct-shade">Connecticut shade</option><option value="natural">Natural</option>
+        <option value="habano" selected>Habano</option><option value="san-andres">San Andres maduro</option>
+        <option value="broadleaf">Broadleaf maduro</option><option value="maduro">Maduro</option>
+        <option value="oscuro">Oscuro</option><option value="cuban">Cuban</option><option value="infused">Infused</option>
+      </select>
+      <label class="fld">Location</label>
+      <select id="f-loc"><option value="home">Home humidor</option><option value="lounge">Tap N Ash</option></select>
+      <label class="fld">Quantity on hand</label><input id="f-qty" type="number" value="1" min="0">
+      <label class="fld">Flavor notes (leave blank to flag for logging)</label>
+      <textarea id="f-flavor" placeholder="Your tasting notes, or leave blank"></textarea>
+      <label class="fld">Pairing notes (optional)</label>
+      <textarea id="f-pairing" placeholder="What it pairs with"></textarea>
+      <button class="btn gold" id="addsave" style="margin-top:16px;">Add cigar</button>
+      <p class="hint">Tip: you can add a photo right after saving, from the cigar's detail page.</p>
+    `;
+    f.querySelector('#addsave').addEventListener('click', () => {
+      const name = f.querySelector('#f-name').value.trim();
+      if (!name){ toast('Give it a name'); return; }
+      const flavor = f.querySelector('#f-flavor').value.trim();
+      const body = +f.querySelector('#f-body').value;
+      const it = C({
+        id: 'c-' + Date.now(),
+        name, brand: f.querySelector('#f-brand').value.trim() || name,
+        origin: '', wrapper: f.querySelector('#f-wrapper').value.trim() || 'Unspecified',
+        wrapperType: f.querySelector('#f-wt').value, body,
+        bodyLabel: flavor ? ({1:'Mild',2:'Mild-Medium',3:'Medium',4:'Medium-Full',5:'Full'}[body]) : 'Unlogged',
+        category: f.querySelector('#f-loc').value==='lounge' ? 'Lounge' : 'Everyday',
+        location: f.querySelector('#f-loc').value,
+        qty: Math.max(0, +f.querySelector('#f-qty').value || 1),
+        flavor, pairing: f.querySelector('#f-pairing').value.trim(), needsLog: !flavor
+      });
+      state.cigars.push(it); save(); toast('Cigar added'); openDetail(it.id);
+    });
+  } else {
+    f.innerHTML = `
+      <label class="fld">Name (brand and edition)</label><input id="f-name" placeholder="e.g. Buffalo Trace, or El Tequileño Reposado">
+      <label class="fld">Spirit</label>
+      <select id="f-cat">
+        <option>Tequila</option><option>Bourbon</option><option>Whisky</option><option>Rum</option>
+        <option>Rye</option><option>Cognac</option><option>Other</option>
+      </select>
+      <label class="fld">Style or edition (e.g. Reposado, Wheated, Single Malt)</label>
+      <input id="f-style" placeholder="e.g. Reposado">
+      <label class="fld">Producer / maker</label><input id="f-producer" placeholder="e.g. Buffalo Trace">
+      <label class="fld">Distillery</label><input id="f-distillery" placeholder="Optional">
+      <label class="fld">Region / country</label><input id="f-region" placeholder="e.g. Kentucky, USA">
+      <label class="fld">ABV</label><input id="f-abv" placeholder="e.g. 45%">
+      <label class="fld">Age</label><input id="f-age" placeholder="Optional">
+      <label class="fld">Approx cost</label><input id="f-price" placeholder="e.g. ~$45">
+      <label class="fld">On the Tap N Ash bar?</label>
+      <select id="f-owned"><option value="no">No, catalog only</option><option value="yes">Yes, on the bar</option></select>
+      <label class="fld">Flavor notes</label><textarea id="f-flavor" placeholder="Profile, how you serve it"></textarea>
+      <label class="fld">History</label><textarea id="f-history" placeholder="Background on the maker or bottle"></textarea>
+      <label class="fld">Pairing notes</label><textarea id="f-pairing" placeholder="Which cigars it pairs with"></textarea>
+      <label class="fld">What the experts say</label><textarea id="f-expert" placeholder="Critic notes or awards"></textarea>
+      <button class="btn gold" id="addsave" style="margin-top:16px;">Add spirit</button>
+    `;
+    f.querySelector('#addsave').addEventListener('click', () => {
+      const name = f.querySelector('#f-name').value.trim();
+      if (!name){ toast('Give it a name'); return; }
+      const owned = f.querySelector('#f-owned').value === 'yes';
+      const it = S({
+        id: 's-' + Date.now(), name,
+        category: f.querySelector('#f-cat').value,
+        style: f.querySelector('#f-style').value.trim() || f.querySelector('#f-cat').value,
+        producer: f.querySelector('#f-producer').value.trim(),
+        distillery: f.querySelector('#f-distillery').value.trim(),
+        region: f.querySelector('#f-region').value.trim(),
+        abv: f.querySelector('#f-abv').value.trim(),
+        age: f.querySelector('#f-age').value.trim(),
+        price: f.querySelector('#f-price').value.trim(),
+        flavor: f.querySelector('#f-flavor').value.trim(),
+        history: f.querySelector('#f-history').value.trim(),
+        pairing: f.querySelector('#f-pairing').value.trim(),
+        expert: f.querySelector('#f-expert').value.trim(),
+        owned, location: owned ? 'lounge' : 'catalog'
+      });
+      state.spirits.push(it); save(); toast('Spirit added'); go('spirits');
+    });
+  }
+}
+
+/* ============================ STATS / YOU ============================ */
+function renderStats(){
+  const cigars = state.cigars;
+  const totalSticks = cigars.reduce((a,c)=>a+(c.qty||0),0);
+  const uniqueSmoked = cigars.filter(c=>smokedCount(c)>0).length;
+  const totalSessions = cigars.reduce((a,c)=>a+smokedCount(c),0);
+  const toLog = cigars.filter(c=>c.needsLog).length;
+  // Recent sessions across all cigars
+  const sessions = [];
+  cigars.forEach(c => (c.log||[]).forEach(l => sessions.push({ name:c.name, ...l })));
+  sessions.sort((a,b)=> new Date(b.date)-new Date(a.date));
+  const recent = sessions.slice(0,10);
+  // Top rated
+  const rated = cigars.filter(c=>avgRating(c)>0).sort((a,b)=>avgRating(b)-avgRating(a)).slice(0,5);
+
+  view.innerHTML = `
+    <div class="card">
+      <div class="stat">
+        <div class="box"><div class="num">${cigars.length}</div><div class="lbl">Cigar labels</div></div>
+        <div class="box"><div class="num">${totalSticks}</div><div class="lbl">Sticks on hand</div></div>
+      </div>
+      <div class="stat" style="margin-top:10px;">
+        <div class="box"><div class="num">${totalSessions}</div><div class="lbl">Sessions logged</div></div>
+        <div class="box"><div class="num">${uniqueSmoked}</div><div class="lbl">Tried so far</div></div>
+        <div class="box"><div class="num">${toLog}</div><div class="lbl">Still to log</div></div>
+      </div>
+    </div>
+    <h2 class="sec">Recent sessions</h2>
+    <div class="card">
+      ${recent.length ? recent.map(s=>`<div class="logentry"><span class="d">${esc(s.name)} · ${fmtDate(s.date)}${s.notes?' · '+esc(s.notes):''}</span><span class="stars">${s.rating?stars(s.rating):''}</span></div>`).join('') : `<div class="empty">No sessions yet. Smoke something and log it from the cigar's page.</div>`}
+    </div>
+    <h2 class="sec">Your highest rated</h2>
+    <div class="card">
+      ${rated.length ? rated.map(c=>`<div class="logentry" data-open="${c.id}" style="cursor:pointer;"><span class="d">${esc(c.name)}</span><span class="stars">${stars(avgRating(c))}</span></div>`).join('') : `<div class="empty">Rate a few smokes to build your top list.</div>`}
+    </div>
+    <h2 class="sec">Backup</h2>
+    <div class="card">
+      <div class="row2">
+        <button class="btn sm" id="exp">Export data</button>
+        <button class="btn sm ghost" id="imp">Import data</button>
+      </div>
+      <p class="hint">Your inventory and sessions live on this device only. Export a backup before clearing browser data or switching phones. Photos are stored separately and are not in the export.</p>
+      <button class="btn ghost danger" id="reset" style="margin-top:10px;">Reset to seed inventory</button>
+    </div>
+  `;
+  view.querySelectorAll('[data-open]').forEach(el => el.addEventListener('click', () => openDetail(el.dataset.open)));
+  document.getElementById('exp').addEventListener('click', exportData);
+  document.getElementById('imp').addEventListener('click', importData);
+  document.getElementById('reset').addEventListener('click', () => {
+    if (!confirm('Reset inventory to the original seed list? Your added items and session logs will be lost.')) return;
+    localStorage.removeItem(LS_KEY); state = load(); toast('Reset done'); go('cigars');
+  });
+}
+function exportData(){
+  const blob = new Blob([JSON.stringify(state, null, 2)], { type:'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'ash-and-oak-backup-' + new Date().toISOString().slice(0,10) + '.json';
+  a.click(); toast('Backup downloaded');
+}
+function importData(){
+  const inp = document.createElement('input'); inp.type='file'; inp.accept='application/json';
+  inp.onchange = () => {
+    const file = inp.files[0]; if (!file) return;
+    const r = new FileReader();
+    r.onload = () => {
+      try{
+        const data = JSON.parse(r.result);
+        if (!data.cigars || !data.spirits) throw new Error('bad');
+        state = data; save(); toast('Data imported'); go('cigars');
+      }catch(e){ toast('Could not read that file'); }
+    };
+    r.readAsText(file);
+  };
+  inp.click();
+}
+
+/* ------- boot ------- */
+go('now');
+if ('serviceWorker' in navigator){
+  window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(()=>{}));
+}
+</script>
+</body>
+</html>
