@@ -159,7 +159,7 @@
 <body>
 <div class="wrap">
   <header>
-    <div class="logo">🚬</div>
+    <div class="logo"><svg viewBox="0 0 24 24" width="1em" height="1em" style="vertical-align:-0.16em" aria-hidden="true"><rect x="2.4" y="9.4" width="16.5" height="5.2" rx="2.6" fill="#c69a5b"/><rect x="14.6" y="9.4" width="4.3" height="5.2" rx="1.6" fill="#8a5a2b"/><rect x="2.4" y="9.4" width="3.6" height="5.2" rx="1.8" fill="#b8860b"/><circle cx="2.7" cy="12" r="1.15" fill="#ff7043"/></svg></div>
     <div>
       <h1>Ash &amp; Oak</h1>
       <p id="subline">Humidor, inventory, and pairing advisor</p>
@@ -170,7 +170,7 @@
 
 <nav class="nav" id="nav">
   <button data-tab="now" class="active"><span class="ic">🎯</span>Now</button>
-  <button data-tab="cigars"><span class="ic">🚬</span>Cigars</button>
+  <button data-tab="cigars"><span class="ic"><svg viewBox="0 0 24 24" width="1em" height="1em" style="vertical-align:-0.16em" aria-hidden="true"><rect x="2.4" y="9.4" width="16.5" height="5.2" rx="2.6" fill="#c69a5b"/><rect x="14.6" y="9.4" width="4.3" height="5.2" rx="1.6" fill="#8a5a2b"/><rect x="2.4" y="9.4" width="3.6" height="5.2" rx="1.8" fill="#b8860b"/><circle cx="2.7" cy="12" r="1.15" fill="#ff7043"/></svg></span>Cigars</button>
   <button data-tab="spirits"><span class="ic">🥃</span>Spirits</button>
   <button data-tab="add"><span class="ic">➕</span>Add</button>
   <button data-tab="stats"><span class="ic">📊</span>You</button>
@@ -637,6 +637,8 @@ function findItem(id){ return allItems().find(x => x.id === id); }
 
 /* ------- Helpers ------- */
 function esc(s){ return (s||'').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+// Inline cigar glyph (no cigar emoji exists in Unicode). Scales with font-size.
+const CIGAR_SVG = '<svg viewBox="0 0 24 24" width="1em" height="1em" style="vertical-align:-0.16em" aria-hidden="true"><rect x="2.4" y="9.4" width="16.5" height="5.2" rx="2.6" fill="#c69a5b"/><rect x="14.6" y="9.4" width="4.3" height="5.2" rx="1.6" fill="#8a5a2b"/><rect x="2.4" y="9.4" width="3.6" height="5.2" rx="1.8" fill="#b8860b"/><circle cx="2.7" cy="12" r="1.15" fill="#ff7043"/></svg>';
 function smokedCount(it){ return (it.log||[]).length; }
 function lastSmoked(it){ const l = it.log||[]; return l.length ? l[l.length-1].date : null; }
 function avgRating(it){ const r=(it.log||[]).filter(x=>x.rating).map(x=>x.rating); return r.length ? (r.reduce((a,b)=>a+b,0)/r.length) : 0; }
@@ -1275,7 +1277,7 @@ function itemRow(it){
   const sub = isCigar
     ? `${esc(it.brand)} · ${esc(it.wrapper)} · ${it.qty} on hand`
     : `${esc(it.producer||it.category)}${it.price?' · '+esc(it.price):''}`;
-  const icon = isCigar ? '🚬' : (SPIRIT_CAT_ICON[it.category] || '🥃');
+  const icon = isCigar ? CIGAR_SVG : (SPIRIT_CAT_ICON[it.category] || '🥃');
   return `
     <div class="item" data-open="${it.id}">
       <div class="thumb" data-photo="${it.id}">${icon}</div>
@@ -1352,7 +1354,7 @@ function openDetail(id){
   sheet.innerHTML = `
     <div class="panel">
       <div class="grab"></div>
-      <div class="dphoto" id="dphoto">${isCigar?'🚬':(SPIRIT_CAT_ICON[it.category]||'🥃')}</div>
+      <div class="dphoto" id="dphoto">${isCigar?CIGAR_SVG:(SPIRIT_CAT_ICON[it.category]||'🥃')}</div>
       <div class="row2">
         <button class="btn sm" id="takephoto">📷 ${it.hasPhoto?'Replace photo':'Add photo'}</button>
         ${isCigar?`<button class="btn sm gold" id="logsmoke">🔥 Log a smoke</button>`:`<button class="btn sm gold" id="logsip">🥃 Log a pour</button>`}
@@ -1510,7 +1512,7 @@ function renderAdd(){
     <div class="card">
       <label class="fld">What are you adding?</label>
       <div class="seg" id="kind">
-        <button class="on" data-k="cigar">🚬 Cigar</button><button data-k="spirit">🥃 Spirit</button>
+        <button class="on" data-k="cigar">${CIGAR_SVG} Cigar</button><button data-k="spirit">🥃 Spirit</button>
       </div>
       <div id="addform"></div>
     </div>
